@@ -31,7 +31,7 @@ async function fetchData() {
         console.log(`Loaded ${productData.length} items.`);
     } catch (error) {
         console.error(error);
-        listContainer.innerHTML = '<div class="status-msg">데이터를 불러오지 못했습니다.</div>';
+        listContainer.innerHTML = '<div class="status-msg">데이터 불러오기 실패!</div>';
     }
 }
 
@@ -210,7 +210,7 @@ function renderList(items) {
     listContainer.innerHTML = '';
     
     if (items.length === 0) {
-        listContainer.innerHTML = '<div class="status-msg">해당하는 상품이 없습니다.</div>';
+        listContainer.innerHTML = '<div class="status-msg">상품이 없습니다.</div>';
         return;
     }
 
@@ -322,7 +322,7 @@ async function generateImage() {
         return;
     }
     
-    const userConfirm = confirm(`총 ${items.length}개의 수집품을 저장하시겠습니까?`);
+    const userConfirm = confirm(`선택한 ${items.length}개의 상품을 이미지로 저장합니다.`);
     if(!userConfirm) return;
 
     const cardSize = 200;
