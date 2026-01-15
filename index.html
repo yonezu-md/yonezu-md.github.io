@@ -11,6 +11,17 @@
 
     <header>
         <h1>요네즈 켄시 굿즈 체크리스트</h1>
+        
+        <div class="progress-area">
+            <div class="progress-info">
+                <span class="progress-label">전체 달성률</span>
+                <span class="progress-text" id="progressText">0/0 (0%)</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
         <div class="filter-container" id="filterContainer"></div>
     </header>
 
@@ -18,8 +29,13 @@
         <div class="status-msg">데이터를 불러오는 중...</div>
     </main>
 
-    <div class="save-btn-container">
-        <button class="save-btn" id="saveBtn" onclick="generateImage()">이미지로 저장하기</button>
+    <div class="floating-btns">
+        <button class="float-btn" id="saveBtn" onclick="generateImage()" title="이미지로 저장">
+            <img src="img/save.png" alt="Save">
+        </button>
+        <button class="float-btn" onclick="scrollToTop()" title="맨 위로">
+            <img src="img/top.png" alt="Top">
+        </button>
     </div>
 
     <script src="script.js"></script>

@@ -1,5 +1,5 @@
 :root {
-    --primary-color: #4A6E75;
+    --primary-color: #182558; 
     --bg-color: #f5f5f5;
     --card-bg: #ffffff;
     --text-color: #333;
@@ -11,17 +11,16 @@ body {
     color: var(--text-color);
     margin: 0;
     padding: 0;
-    padding-bottom: 80px;
+    padding-bottom: 100px;
 }
 
+/* 상단 헤더 */
 header {
     background-color: var(--card-bg);
-    padding: 20px;
+    padding: 20px 20px 10px 20px;
     text-align: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    position: relative; 
 }
 
 h1 {
@@ -30,12 +29,48 @@ h1 {
     color: var(--primary-color);
 }
 
+/* 프로그레스 바 스타일 */
+.progress-area {
+    max-width: 600px;
+    margin: 0 auto 15px auto;
+    text-align: left;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    color: #666;
+    font-weight: bold;
+}
+
+.progress-text {
+    color: var(--primary-color);
+}
+
+.progress-track {
+    width: 100%;
+    height: 10px;
+    background-color: #eee;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* 필터 버튼 */
 .filter-container {
     display: flex;
     gap: 10px;
     overflow-x: auto;
     white-space: nowrap;
-    padding-bottom: 5px;
+    padding-bottom: 10px;
     justify-content: center;
     scrollbar-width: none;
 }
@@ -66,7 +101,6 @@ h1 {
 
 .category-section {
     margin-bottom: 40px;
-    scroll-margin-top: 140px;
 }
 
 .category-title {
@@ -113,29 +147,33 @@ h1 {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* [수정] 화면에서는 흑백 필터 제거 (항상 컬러) */
     transition: all 0.3s ease;
 }
 
+/* [수정] 체크 버튼 스타일 (우측 상단 원형) */
 .check-overlay {
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.2);
-    display: flex;
+    
+    /* 체크 안 됐을 땐 아예 안 보이게 설정 */
+    display: none; 
+    
     align-items: center;
     justify-content: center;
     color: white;
     font-size: 14px;
-    transition: all 0.2s;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* 체크되었을 때 오버레이 스타일 */
+/* 체크되었을 때만 오버레이(버튼) 표시 */
 .item-card.checked .check-overlay {
-    background: var(--primary-color);
+    display: flex;
+    background-color: var(--primary-color); /* 네이비색 배경 */
 }
 
 .item-card.checked .check-overlay::after { content: '✔'; }
@@ -161,31 +199,56 @@ h1 {
     font-weight: bold;
 }
 
-.save-btn-container {
+/* 플로팅 버튼 스타일 */
+.floating-btns {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 30px;
+    right: 30px;
     z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.save-btn {
-    background-color: var(--primary-color);
-    color: white;
+.float-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #FFFFFF;
     border: none;
-    padding: 12px 24px;
-    border-radius: 30px;
-    font-size: 1rem;
-    font-weight: bold;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: transform 0.2s;
+    padding: 0;
 }
 
-.save-btn:hover { transform: scale(1.05); }
-.save-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+.float-btn img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.float-btn:hover { transform: scale(1.1); }
+
 .status-msg { text-align: center; padding: 50px; color: #888; }
 
 @media (max-width: 600px) {
     .items-grid { grid-template-columns: repeat(2, 1fr); }
     .filter-container { justify-content: flex-start; }
+    
+    .floating-btns {
+        bottom: 20px;
+        right: 20px;
+    }
+    .float-btn {
+        width: 50px;
+        height: 50px;
+    }
+    .float-btn img {
+        width: 24px;
+        height: 24px;
+    }
 }
