@@ -39,20 +39,26 @@
                     <img id="imgCollection" src="" alt="Collection Preview">
                 </div>
 
-                <div class="preview-controls-inline">
-                    <label class="control-item">
-                        <input type="checkbox" id="optTitleCheck"> 타이틀
-                    </label>
-                    <input type="text" id="optTitleInput" placeholder="타이틀 입력">
+                <div class="preview-controls-wrapper">
+                    <div class="control-row top-row">
+                        <label class="control-item">
+                            <input type="checkbox" id="optTitleCheck"> 타이틀
+                        </label>
+                        <input type="text" id="optTitleInput" placeholder="타이틀을 입력하세요.">
+                    </div>
                     
-                    <span class="control-divider">|</span>
-                    
-                    <label class="control-item">
-                        <input type="checkbox" id="optNameKoCheck" checked> 상품명
-                    </label>
-                    <label class="control-item">
-                        <input type="checkbox" id="optNameJpCheck"> 商品名
-                    </label>
+                    <div class="control-row bottom-row">
+                        <span class="control-label-text">상품명</span>
+                        <label class="control-item">
+                            <input type="checkbox" id="optNameKoCheck" checked> 한글
+                        </label>
+                        <label class="control-item">
+                            <input type="checkbox" id="optNameJpCheck"> 日本語
+                        </label>
+                        <label class="control-item">
+                            <input type="checkbox" id="optPriceCheck"> 가격
+                        </label>
+                    </div>
                 </div>
 
                 <button class="action-btn download" onclick="downloadImage('collection')">리스트 이미지 저장</button>
