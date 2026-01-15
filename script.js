@@ -4,17 +4,23 @@ let productData = [];
 let currentDisplayData = []; 
 const STORAGE_KEY = 'kenshi_owned';
 
+// [메뉴 분류를 위한 키워드]
+const TYPE_MUSIC = ['CD / DVD / Blu-ray'];
+const TYPE_BOOK = ['괴수도감', 'SCORE BOOK', 'REISSUE FURNITURE'];
+// 나머지는 LIVE
+
 let ownedItems = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
 
 const listContainer = document.getElementById('listContainer');
 const navMenuContainer = document.getElementById('navMenuContainer');
+const sidebarContent = document.getElementById('sidebarContent');
 
 // --- 초기화 ---
 async function init() {
     await fetchData();
     if(productData.length > 0) {
         renderNavMenu();
-        filterData(null, null); // 전체 보기
+        renderAllList(); 
         updateProgress();
     }
 }
@@ -59,89 +65,154 @@ function parseCSV(csvText) {
     return data;
 }
 
-// --- 네비게이션 메뉴 생성 ---
+// --- 네비게이션 메뉴 및 사이드바 생성 ---
 function renderNavMenu() {
+    // 1. 컨테이너 초기화
     navMenuContainer.innerHTML = '';
+    sidebarContent.innerHTML = '';
 
-    // [1] HOME 버튼 생성 (첫번째 위치)
-    const homeGroup = document.createElement('div');
-    homeGroup.className = 'nav-group';
-    
-    // HOME 버튼 스타일: 메인 카테고리(.nav-header)와 동일한 볼드 효과 + 클릭 가능
-    const homeBtn = document.createElement('button');
-    homeBtn.className = 'nav-header'; 
-    homeBtn.innerText = 'HOME';
-    // 버튼 기본 스타일 리셋 및 커서 추가
-    homeBtn.style.background = 'none';
-    homeBtn.style.border = 'none';
-    homeBtn.style.padding = '0';
-    homeBtn.style.cursor = 'pointer';
-    homeBtn.style.textAlign = 'left';
-    homeBtn.onclick = resetFilter;
-    
-    homeGroup.appendChild(homeBtn);
-    navMenuContainer.appendChild(homeGroup);
+    // 2. HOME 버튼 생성 (PC/모바일 공통 로직)
+    const createHomeGroup = () => {
+        const homeGroup = document.createElement('div');
+        homeGroup.className = 'nav-group';
+        const homeBtn = document.createElement('button');
+        homeBtn.className = 'nav-header'; 
+        homeBtn.innerText = 'HOME';
+        homeBtn.style.background = 'none';
+        homeBtn.style.border = 'none';
+        homeBtn.style.padding = '0';
+        homeBtn.style.cursor = 'pointer';
+        homeBtn.style.textAlign = 'left';
+        homeBtn.onclick = () => {
+            resetFilter();
+            closeSidebar(); // 모바일에서 클릭 시 사이드바 닫기
+        };
+        homeGroup.appendChild(homeBtn);
+        return homeGroup;
+    };
 
+    // PC용 HOME
+    navMenuContainer.appendChild(createHomeGroup());
+    // 모바일용 HOME
+    sidebarContent.appendChild(createHomeGroup());
 
-    // [2] 카테고리 데이터 수집
-    const catMap = {};
+    // 3. 카테고리 데이터 수집
+    const catMap = new Map();
     productData.forEach(item => {
         const main = item.category;
         const sub = item.sub_category;
         
-        if (!catMap[main]) {
-            catMap[main] = new Set();
+        if (!catMap.has(main)) {
+            catMap.set(main, new Set());
         }
         if (sub && sub.trim() !== '') {
-            catMap[main].add(sub);
+            catMap.get(main).add(sub);
         }
     });
 
-    // [3] 나머지 카테고리 메뉴 생성
-    const mainCategories = Object.keys(catMap);
+    // 4. PC용 3단 컬럼 준비
+    const colMusic = document.createElement('div');
+    const colLive = document.createElement('div');
+    const colBook = document.createElement('div');
 
-    mainCategories.forEach(mainCat => {
-        const subCategories = [...catMap[mainCat]];
+    // 5. 카테고리 순회하며 버튼 생성
+    for (const [mainCat, subSet] of catMap) {
+        const subCats = [...subSet];
+        subCats.sort().reverse(); 
+
+        // PC용 그룹
+        const pcGroup = createCategoryGroup(mainCat, subCats, false);
         
-        // 정렬(sort) 관련 로직은 사용자의 지시에 따라 제거하거나,
-        // 필요하다면 역순 정렬 등 기존 로직 유지 (여기서는 사용자 지시대로 건드리지 않음)
-        // 하지만 서브카테고리 표시 순서를 위해 기본적으로 sort()를 사용했었음.
-        // *사용자 지시: "네가 임의로 무언가를 건드리지 마" -> 기존 코드 유지
-        // 이전에 subCategories.sort().reverse() 코드가 있었으므로 유지합니다.
-        subCategories.sort().reverse(); 
+        // PC 분류 배치
+        if (TYPE_MUSIC.includes(mainCat)) colMusic.appendChild(pcGroup);
+        else if (TYPE_BOOK.includes(mainCat)) colBook.appendChild(pcGroup);
+        else colLive.appendChild(pcGroup);
 
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'nav-group';
+        // 모바일용 그룹 (분류 없이 순서대로, 혹은 별도 로직)
+        // 여기서는 스프레드시트 순서대로 사이드바에 쌓습니다.
+        const mobileGroup = createCategoryGroup(mainCat, subCats, true);
+        sidebarContent.appendChild(mobileGroup);
+    }
 
-        const header = document.createElement('div');
-        header.className = 'nav-header';
-        header.innerText = mainCat;
-        groupDiv.appendChild(header);
+    // 6. PC 메뉴 DOM 조립
+    const pcWrapper = document.createElement('div');
+    pcWrapper.className = 'nav-grid';
+    pcWrapper.innerHTML = `
+        <div class="nav-column">
+            <div class="nav-header" style="border-bottom:2px solid #333; margin-bottom:15px;">MUSIC</div>
+            <div id="wrapper-music"></div>
+        </div>
+        <div class="nav-column">
+            <div class="nav-header" style="border-bottom:2px solid #333; margin-bottom:15px;">LIVE</div>
+            <div id="wrapper-live"></div>
+        </div>
+        <div class="nav-column">
+            <div class="nav-header" style="border-bottom:2px solid #333; margin-bottom:15px;">BOOK / ETC</div>
+            <div id="wrapper-book"></div>
+        </div>
+    `;
+    navMenuContainer.appendChild(pcWrapper);
 
-        if (subCategories.length > 0) {
-            subCategories.forEach(sub => {
-                const btn = document.createElement('button');
-                btn.className = 'nav-item';
-                btn.innerText = sub;
-                btn.onclick = (e) => {
-                    handleMenuClick(e.target);
-                    filterData(mainCat, sub);
-                };
-                groupDiv.appendChild(btn);
-            });
-        } else {
+    pcWrapper.querySelector('#wrapper-music').appendChild(colMusic);
+    pcWrapper.querySelector('#wrapper-live').appendChild(colLive);
+    pcWrapper.querySelector('#wrapper-book').appendChild(colBook);
+}
+
+// 카테고리 그룹(메인+서브버튼들) 생성 헬퍼
+function createCategoryGroup(mainCat, subCats, isMobile) {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'nav-group';
+
+    const header = document.createElement('div');
+    header.className = 'nav-header';
+    header.innerText = mainCat;
+    groupDiv.appendChild(header);
+
+    if (subCats.length > 0) {
+        subCats.forEach(sub => {
             const btn = document.createElement('button');
             btn.className = 'nav-item';
-            btn.innerText = mainCat;
+            btn.innerText = sub;
             btn.onclick = (e) => {
                 handleMenuClick(e.target);
-                filterData(mainCat, null);
+                filterData(mainCat, sub);
+                if(isMobile) closeSidebar();
             };
             groupDiv.appendChild(btn);
-        }
+        });
+    } else {
+        const btn = document.createElement('button');
+        btn.className = 'nav-item';
+        btn.innerText = mainCat;
+        btn.onclick = (e) => {
+            handleMenuClick(e.target);
+            filterData(mainCat, null);
+            if(isMobile) closeSidebar();
+        };
+        groupDiv.appendChild(btn);
+    }
+    return groupDiv;
+}
 
-        navMenuContainer.appendChild(groupDiv);
-    });
+// --- 사이드바 토글 기능 ---
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const hamburger = document.querySelector('.hamburger-menu');
+    
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
+    hamburger.classList.toggle('open'); // 햄버거 아이콘 <-> X 아이콘 변환
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const hamburger = document.querySelector('.hamburger-menu');
+    
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    hamburger.classList.remove('open');
 }
 
 function handleMenuClick(target) {
@@ -151,7 +222,7 @@ function handleMenuClick(target) {
 
 function resetFilter() {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    filterData(null, null);
+    renderAllList(); 
 }
 
 // --- 데이터 필터링 ---
@@ -168,7 +239,7 @@ function filterData(mainCat, subCat) {
     renderList(currentDisplayData);
 }
 
-// --- 리스트 그리기 (서브카테고리별 섹션 구분) ---
+// --- 리스트 그리기 ---
 function renderList(items) {
     listContainer.innerHTML = '';
     
@@ -177,34 +248,26 @@ function renderList(items) {
         return;
     }
 
-    // items를 "서브 카테고리"(없으면 메인) 기준으로 그룹화
-    const grouped = {};
+    // 그룹화 로직
+    const grouped = new Map();
     items.forEach(item => {
-        // 타이틀 기준: 서브카테고리 > 메인카테고리
         const key = (item.sub_category && item.sub_category.trim() !== '') 
                     ? item.sub_category 
                     : item.category;
         
-        if(!grouped[key]) grouped[key] = [];
-        grouped[key].push(item);
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key).push(item);
     });
 
-    // 그룹별 섹션 생성 (순서는 items의 순서를 따르기 위해 별도 정렬 안함)
-    // 하지만 Object.keys 순서는 보장되지 않으므로, 순서를 보장하려면 Map을 쓰거나
-    // items를 순회하면서 새로운 키가 나올 때마다 섹션을 만드는 방식이 좋음.
-    // 여기서는 간단히 그룹화된 키 순서대로 출력 (일반적으로 삽입 순서)
-    
-    Object.keys(grouped).forEach(key => {
-        const groupItems = grouped[key];
-        
+    for (const [title, groupItems] of grouped) {
         const section = document.createElement('div');
         section.className = 'category-section';
 
         const ownedCount = groupItems.filter(i => ownedItems.has(i.id)).length;
         
-        const title = document.createElement('div');
-        title.className = 'category-title';
-        title.innerHTML = `${key} <small style="color:#888; font-weight:normal;">(${ownedCount}/${groupItems.length})</small>`;
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'category-title';
+        titleDiv.innerHTML = `${title} <small style="color:#888; font-weight:normal;">(${ownedCount}/${groupItems.length})</small>`;
         
         const grid = document.createElement('div');
         grid.className = 'items-grid';
@@ -231,10 +294,15 @@ function renderList(items) {
             grid.appendChild(card);
         });
 
-        section.appendChild(title);
+        section.appendChild(titleDiv);
         section.appendChild(grid);
         listContainer.appendChild(section);
-    });
+    }
+}
+
+// --- 전체 리스트 그리기 (초기) ---
+function renderAllList() {
+    renderList(productData);
 }
 
 // --- 체크 토글 ---
@@ -246,9 +314,8 @@ function toggleCheck(id) {
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
     
-    // 현재 필터링된 데이터(currentDisplayData)로 다시 그리기
+    // 현재 리스트 갱신
     renderList(currentDisplayData);
-    
     updateProgress(); 
 }
 
@@ -296,7 +363,7 @@ async function generateImage() {
     const cvs = document.createElement('canvas');
     const ctx = cvs.getContext('2d');
 
-    const items = currentDisplayData; 
+    const items = currentDisplayData;
 
     if (items.length === 0) {
         alert("저장할 항목이 없습니다.");
