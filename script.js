@@ -4,11 +4,6 @@ let productData = [];
 let currentDisplayData = []; 
 const STORAGE_KEY = 'kenshi_owned';
 
-// [메뉴 분류를 위한 키워드]
-const TYPE_MUSIC = ['CD / DVD / Blu-ray'];
-const TYPE_BOOK = ['괴수도감', 'SCORE BOOK', 'REISSUE FURNITURE'];
-// 나머지는 LIVE
-
 let ownedItems = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
 
 const listContainer = document.getElementById('listContainer');
@@ -70,7 +65,7 @@ function renderNavMenu() {
     navMenuContainer.innerHTML = '';
     sidebarContent.innerHTML = '';
 
-    // HOME 버튼 (PC/모바일 공통)
+    // [1] HOME 버튼 (PC/모바일 공통)
     const createHomeGroup = () => {
         const homeGroup = document.createElement('div');
         homeGroup.className = 'nav-group';
@@ -93,6 +88,7 @@ function renderNavMenu() {
     navMenuContainer.appendChild(createHomeGroup());
     sidebarContent.appendChild(createHomeGroup());
 
+    // [2] 카테고리 데이터 수집 (시트 순서 유지)
     const catMap = new Map();
     productData.forEach(item => {
         const main = item.category;
@@ -101,51 +97,22 @@ function renderNavMenu() {
         if (sub && sub.trim() !== '') catMap.get(main).add(sub);
     });
 
-    const colMusic = document.createElement('div');
-    const colLive = document.createElement('div');
-    const colBook = document.createElement('div');
-    
-    // PC 레이아웃용 클래스 추가
-    colMusic.className = 'nav-column';
-    colLive.className = 'nav-column';
-    colBook.className = 'nav-column';
-
+    // [3] 카테고리 순회하며 버튼 생성 (순서대로)
     for (const [mainCat, subSet] of catMap) {
         const subCats = [...subSet];
-        subCats.sort().reverse(); 
+        // *정렬 로직 제거: 형님이 원하시는 대로 시트 순서만 따르거나, 
+        // 만약 기존처럼 서브카테고리만 역순(최신순)을 원하시면 
+        // 아래 줄 주석 해제하세요. 지금은 시트 순서 그대로 갑니다.
+        // subCats.sort().reverse(); 
 
-        // PC용
+        // PC용 그룹 생성
         const pcGroup = createCategoryGroup(mainCat, subCats, false);
-        if (TYPE_MUSIC.includes(mainCat)) colMusic.appendChild(pcGroup);
-        else if (TYPE_BOOK.includes(mainCat)) colBook.appendChild(pcGroup);
-        else colLive.appendChild(pcGroup);
+        navMenuContainer.appendChild(pcGroup);
 
-        // 모바일용
+        // 모바일용 그룹 생성
         const mobileGroup = createCategoryGroup(mainCat, subCats, true);
         sidebarContent.appendChild(mobileGroup);
     }
-
-    const pcWrapper = document.createElement('div');
-    pcWrapper.className = 'nav-grid';
-    pcWrapper.innerHTML = `
-        <div class="nav-column">
-            <div class="nav-header" style="border-bottom:2px solid #333; margin-bottom:15px;">MUSIC</div>
-            <div id="wrapper-music"></div>
-        </div>
-        <div class="nav-column">
-            <div class="nav-header" style="border-bottom:2px solid #333; margin-bottom:15px;">LIVE</div>
-            <div id="wrapper-live"></div>
-        </div>
-        <div class="nav-column">
-            <div class="nav-header" style="border-bottom:2px solid #333; margin-bottom:15px;">BOOK / ETC</div>
-            <div id="wrapper-book"></div>
-        </div>
-    `;
-    navMenuContainer.appendChild(pcWrapper);
-
-    pcWrapper.querySelector('#wrapper-music').appendChild(colMusic);
-    pcWrapper.querySelector('#wrapper-live').appendChild(colLive);
-    pcWrapper.querySelector('#wrapper-book').appendChild(colBook);
 }
 
 function createCategoryGroup(mainCat, subCats, isMobile) {
@@ -286,7 +253,6 @@ function renderList(items) {
 }
 
 function renderAllList() {
-    // [버그 수정] 전체 보기 시 현재 표시 데이터도 전체로 리셋
     currentDisplayData = productData;
     renderList(productData);
 }
