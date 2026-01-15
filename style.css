@@ -310,3 +310,19 @@ h1 {
         height: 6px; /* 바 높이 축소 */
     }
 }
+
+/* ... (위에 있는 기존 코드 절대 건드리지 않음) ... */
+
+/* [추가] 서브 필터 스타일 (약간 작게 표시) */
+.sub-filter .filter-btn {
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    background-color: #f0f0f0; /* 배경색을 살짝 다르게 */
+    border-color: #eee;
+}
+
+.sub-filter .filter-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
