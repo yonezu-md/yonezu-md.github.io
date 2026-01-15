@@ -11,7 +11,8 @@ body {
     color: var(--text-color);
     margin: 0;
     padding: 0;
-    padding-bottom: 100px;
+    /* 하단 플로팅 바 공간 확보를 위해 여백 넉넉히 */
+    padding-bottom: 120px; 
 }
 
 /* 상단 헤더 */
@@ -29,18 +30,66 @@ h1 {
     color: var(--primary-color);
 }
 
-/* 프로그레스 바 스타일 */
-.progress-area {
-    max-width: 600px;
-    margin: 0 auto 15px auto;
-    text-align: left;
+/* [추가] 상단 버튼 그룹 스타일 */
+.header-btns {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.header-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.2s;
+}
+
+.header-btn.save {
+    background-color: var(--primary-color);
+    color: white;
+}
+.header-btn.save:hover {
+    background-color: #2a3b75;
+}
+
+.header-btn.reset {
+    background-color: #eee;
+    color: #666;
+}
+.header-btn.reset:hover {
+    background-color: #ddd;
+    color: #333;
+}
+
+/* [수정] 하단 플로팅 프로그레스 바 */
+.floating-progress {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%); /* 중앙 정렬 */
+    width: 90%;
+    max-width: 400px; /* 너무 넓어지지 않게 제한 */
+    background-color: #FFFFFF;
+    border-radius: 20px; /* 둥근 직사각형 */
+    padding: 15px 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    z-index: 900; /* 탑 버튼(999)보다는 아래, 콘텐츠보다는 위 */
+    
+    /* 모바일 탑 버튼 공간 고려: 
+       탑 버튼이 우측에 있으므로 중앙 정렬된 바와 겹치지 않게 max-width 조절됨 
+    */
 }
 
 .progress-info {
     display: flex;
     justify-content: space-between;
     font-size: 0.9rem;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     color: #666;
     font-weight: bold;
 }
@@ -51,9 +100,9 @@ h1 {
 
 .progress-track {
     width: 100%;
-    height: 10px;
+    height: 8px;
     background-color: #eee;
-    border-radius: 5px;
+    border-radius: 4px;
     overflow: hidden;
 }
 
@@ -150,7 +199,7 @@ h1 {
     transition: all 0.3s ease;
 }
 
-/* [수정] 체크 버튼 스타일 (우측 상단 원형) */
+/* 체크 버튼 스타일 */
 .check-overlay {
     position: absolute;
     top: 10px;
@@ -158,10 +207,7 @@ h1 {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    
-    /* 체크 안 됐을 땐 아예 안 보이게 설정 */
     display: none; 
-    
     align-items: center;
     justify-content: center;
     color: white;
@@ -170,10 +216,9 @@ h1 {
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* 체크되었을 때만 오버레이(버튼) 표시 */
 .item-card.checked .check-overlay {
     display: flex;
-    background-color: var(--primary-color); /* 네이비색 배경 */
+    background-color: var(--primary-color);
 }
 
 .item-card.checked .check-overlay::after { content: '✔'; }
@@ -199,7 +244,7 @@ h1 {
     font-weight: bold;
 }
 
-/* 플로팅 버튼 스타일 */
+/* [수정] 플로팅 버튼 (탑 버튼만 남음) */
 .floating-btns {
     position: fixed;
     bottom: 30px;
@@ -207,7 +252,6 @@ h1 {
     z-index: 999;
     display: flex;
     flex-direction: column;
-    gap: 15px;
 }
 
 .float-btn {
@@ -239,8 +283,9 @@ h1 {
     .items-grid { grid-template-columns: repeat(2, 1fr); }
     .filter-container { justify-content: flex-start; }
     
+    /* 모바일에서는 플로팅 버튼 위치 및 크기 조정 */
     .floating-btns {
-        bottom: 20px;
+        bottom: 25px;
         right: 20px;
     }
     .float-btn {

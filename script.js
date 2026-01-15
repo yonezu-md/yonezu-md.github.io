@@ -14,7 +14,7 @@ async function init() {
     if(productData.length > 0) {
         renderFilters();
         renderList();
-        updateProgress(); // 초기 로드 시 달성률 업데이트
+        updateProgress();
     }
 }
 
@@ -79,19 +79,28 @@ function scrollToCategory(category) {
     if(element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// --- [추가] 맨 위로 스크롤 ---
+// --- 맨 위로 스크롤 ---
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// --- [추가] 달성률 업데이트 ---
+// --- [추가] 기록 초기화 ---
+function resetRecords() {
+    if (confirm("모든 체크 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) {
+        ownedItems.clear();
+        localStorage.removeItem(STORAGE_KEY);
+        renderList();
+        updateProgress();
+        alert("초기화되었습니다.");
+    }
+}
+
+// --- 달성률 업데이트 ---
 function updateProgress() {
     const totalCount = productData.length;
     if (totalCount === 0) return;
 
-    // 현재 보유 중인 아이템 중 실제 데이터에 있는 것만 카운트 (삭제된 아이템 제외)
     const validOwnedCount = productData.filter(item => ownedItems.has(item.id)).length;
-    
     const percent = Math.round((validOwnedCount / totalCount) * 100);
 
     const progressBar = document.getElementById('progressBar');
@@ -162,16 +171,16 @@ function toggleCheck(id) {
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
     renderList();
-    updateProgress(); // [추가] 체크 시 달성률 즉시 반영
+    updateProgress(); 
 }
 
 // --- 이미지 생성 ---
 async function generateImage() {
-    // 버튼 내 아이콘 이미지 임시 저장 또는 상태 변경 처리
-    const btn = document.getElementById('saveBtn');
-    // 아이콘이 있는 버튼이라 텍스트 변경 대신 투명도 등으로 상태 표시 권장하지만
-    // 기존 로직 유지를 위해 클릭 방지만 설정
-    btn.style.opacity = '0.5';
+    // [수정] 상단 버튼 ID로 변경
+    const btn = document.getElementById('headerSaveBtn');
+    const originalText = btn.innerText;
+    
+    btn.innerText = "생성 중...";
     btn.disabled = true;
 
     await document.fonts.ready;
@@ -265,7 +274,7 @@ async function generateImage() {
     link.href = cvs.toDataURL('image/jpeg', 0.9);
     link.click();
 
-    btn.style.opacity = '1';
+    btn.innerText = originalText;
     btn.disabled = false;
 }
 
