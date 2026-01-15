@@ -18,18 +18,41 @@
         <div class="header-top-row">
             <h1 onclick="goHome()">요네즈 켄시 콜렉션</h1>
         </div>
-        
         <div id="navMenuContainer"></div>
     </header>
 
     <div id="sidebar" class="sidebar">
         <div id="sidebarContent"></div>
     </div>
-    
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-    <main id="listContainer">
-        <div class="status-msg">데이터를 불러오는 중...</div>
+    <main>
+        <div id="listContainer">
+            <div class="status-msg">데이터를 불러오는 중...</div>
+        </div>
+
+        <div id="previewContainer" style="display: none;">
+            
+            <div class="preview-card">
+                <div class="preview-label">1. 체크 리스트</div>
+                <div class="preview-img-box">
+                    <img id="imgCollection" src="" alt="Collection Preview">
+                </div>
+                <button class="action-btn download" onclick="downloadImage('collection')">리스트 이미지 저장</button>
+            </div>
+
+            <div class="preview-card">
+                <div class="preview-label">2. 수집률 카드</div>
+                <div class="preview-img-box">
+                    <img id="imgStats" src="" alt="Stats Preview">
+                </div>
+                <button class="action-btn download" onclick="downloadImage('stats')">수집률 카드 저장</button>
+            </div>
+
+            <div class="preview-footer">
+                <button class="action-btn cancel" onclick="closePreview()">돌아가기</button>
+            </div>
+        </div>
     </main>
 
     <div class="floating-progress">
