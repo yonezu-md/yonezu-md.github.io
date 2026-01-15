@@ -1,226 +1,223 @@
-:root {
-    --primary-color: #4A6E75; /* 요네즈 켄시 테마 컬러 (청록색) */
-    --bg-color: #f5f5f5;
-    --card-bg: #ffffff;
-    --text-color: #333;
-}
+// --- 설정 및 데이터 ---
+const SHEET_ID = '1-3ux609KgZ7vwEYHPsfTeopwyAcex-q1uiXiIYO57a8';
+let productData = [];
+const STORAGE_KEY = 'kenshi_owned';
 
-body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    margin: 0;
-    padding: 0;
-    padding-bottom: 80px; /* 하단 버튼 여백 */
-}
+let ownedItems = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
 
-/* 상단 헤더 & 필터 */
-header {
-    background-color: var(--card-bg);
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
+const listContainer = document.getElementById('listContainer');
+const filterContainer = document.getElementById('filterContainer');
 
-h1 {
-    margin: 0 0 15px 0;
-    font-size: 1.5rem;
-    color: var(--primary-color);
-}
-
-.filter-container {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding-bottom: 5px;
-    justify-content: center;
-    scrollbar-width: none;
-}
-.filter-container::-webkit-scrollbar {
-    display: none;
-}
-
-.filter-btn {
-    background: none;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: #666;
-    transition: all 0.2s;
-}
-
-.filter-btn:hover, .filter-btn.active {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-/* 메인 컨텐츠 */
-#listContainer {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.category-section {
-    margin-bottom: 40px;
-    scroll-margin-top: 140px; /* 헤더에 가려지지 않게 여백 조정 */
-}
-
-.category-title {
-    font-size: 1.2rem;
-    margin-bottom: 15px;
-    border-left: 5px solid var(--primary-color);
-    padding-left: 10px;
-    color: #444;
-}
-
-.items-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
-}
-
-/* 아이템 카드 */
-.item-card {
-    background: var(--card-bg);
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    cursor: pointer;
-    transition: transform 0.2s;
-    border: 2px solid transparent;
-    position: relative;
-}
-
-.item-card:hover {
-    transform: translateY(-3px);
-}
-
-.item-card.checked {
-    border-color: var(--primary-color);
-}
-
-.item-img-wrapper {
-    width: 100%;
-    padding-top: 100%; /* 1:1 비율 유지 */
-    position: relative;
-    background-color: #eee;
-}
-
-.item-img-wrapper img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* 핵심: 미보유 시 흑백 처리 */
-    filter: grayscale(100%); 
-    opacity: 0.7;
-    transition: all 0.3s ease;
-}
-
-.item-card.checked .item-img-wrapper img {
-    filter: none; /* 체크 시 컬러 복구 */
-    opacity: 1;
-}
-
-.check-overlay {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 14px;
-    transition: all 0.2s;
-}
-
-.item-card.checked .check-overlay {
-    background: var(--primary-color);
-}
-
-.item-card.checked .check-overlay::after {
-    content: '✔';
-}
-
-.item-info {
-    padding: 10px;
-}
-
-.item-name {
-    font-size: 0.95rem;
-    font-weight: bold;
-    margin-bottom: 4px;
-    word-break: keep-all;
-}
-
-.item-subname {
-    font-size: 0.8rem;
-    color: #888;
-    margin-bottom: 5px;
-}
-
-.item-price {
-    font-size: 0.85rem;
-    color: var(--primary-color);
-    font-weight: bold;
-}
-
-/* 하단 저장 버튼 */
-.save-btn-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999;
-}
-
-.save-btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 30px;
-    font-size: 1rem;
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.save-btn:hover {
-    transform: scale(1.05);
-}
-
-.save-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-/* 로딩/에러 메시지 */
-.status-msg {
-    text-align: center;
-    padding: 50px;
-    color: #888;
-}
-
-@media (max-width: 600px) {
-    .items-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .filter-container {
-        justify-content: flex-start; /* 모바일: 가로 스크롤 허용 */
+// --- 초기화 ---
+async function init() {
+    await fetchData();
+    if(productData.length > 0) {
+        renderFilters();
+        renderList();
     }
 }
+
+// --- 데이터 가져오기 ---
+async function fetchData() {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("네트워크 오류");
+        const text = await response.text();
+        productData = parseCSV(text);
+        console.log(`Loaded ${productData.length} items.`);
+    } catch (error) {
+        console.error(error);
+        listContainer.innerHTML = '<div class="status-msg">데이터를 불러오지 못했습니다.<br>스프레드시트 권한이나 ID를 확인해주세요.</div>';
+    }
+}
+
+// --- CSV 파싱 ---
+function parseCSV(csvText) {
+    const rows = csvText.split('\n').map(row => {
+        const regex = /(?:^|,)(\"(?:[^\"]+|\"\")*\"|[^,]*)/g;
+        let columns = [];
+        let match;
+        while (match = regex.exec(row)) {
+            let col = match[1].replace(/^"|"$/g, '').replace(/""/g, '"');
+            columns.push(col.trim());
+        }
+        return columns;
+    });
+
+    const headers = rows[0]; 
+    const data = [];
+
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length < headers.length) continue;
+        const item = {};
+        headers.forEach((h, idx) => item[h] = row[idx]);
+        if(item.id) data.push(item);
+    }
+    return data;
+}
+
+// --- 필터 버튼 생성 ---
+function renderFilters() {
+    const categories = [...new Set(productData.map(item => item.category))];
+    filterContainer.innerHTML = '';
+    categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.innerText = cat;
+        btn.onclick = () => scrollToCategory(cat);
+        filterContainer.appendChild(btn);
+    });
+}
+
+// --- 카테고리 스크롤 이동 ---
+function scrollToCategory(category) {
+    const element = document.getElementById(`cat-${category}`);
+    if(element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// --- 리스트 렌더링 ---
+function renderList() {
+    listContainer.innerHTML = '';
+    
+    const grouped = {};
+    productData.forEach(item => {
+        if(!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push(item);
+    });
+
+    for (const [category, items] of Object.entries(grouped)) {
+        const section = document.createElement('div');
+        section.className = 'category-section';
+        section.id = `cat-${category}`;
+
+        const ownedCount = items.filter(i => ownedItems.has(i.id)).length;
+        
+        const title = document.createElement('div');
+        title.className = 'category-title';
+        title.innerHTML = `${category} <small style="color:#888; font-weight:normal;">(${ownedCount}/${items.length})</small>`;
+        
+        const grid = document.createElement('div');
+        grid.className = 'items-grid';
+
+        items.forEach(item => {
+            const isOwned = ownedItems.has(item.id);
+            const card = document.createElement('div');
+            card.className = `item-card ${isOwned ? 'checked' : ''}`;
+            card.onclick = () => toggleCheck(item.id);
+
+            const imgSrc = item.image || 'https://via.placeholder.com/150?text=No+Image';
+
+            card.innerHTML = `
+                <div class="item-img-wrapper">
+                    <img src="${imgSrc}" loading="lazy" alt="${item.nameKo}">
+                    <div class="check-overlay"></div>
+                </div>
+                <div class="item-info">
+                    <div class="item-name">${item.nameKo}</div>
+                    <div class="item-subname">${item.nameJp || ''}</div>
+                    <div class="item-price">${item.price || '-'}</div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        section.appendChild(title);
+        section.appendChild(grid);
+        listContainer.appendChild(section);
+    }
+}
+
+// --- 체크 토글 ---
+function toggleCheck(id) {
+    if (ownedItems.has(id)) {
+        ownedItems.delete(id);
+    } else {
+        ownedItems.add(id);
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
+    renderList();
+}
+
+// --- 이미지 생성 (체크 안 된 건 여기서 흑백 처리) ---
+async function generateImage() {
+    const btn = document.getElementById('saveBtn');
+    const originalText = btn.innerText;
+    btn.innerText = "생성 중...";
+    btn.disabled = true;
+
+    await document.fonts.ready;
+
+    const cvs = document.createElement('canvas');
+    const ctx = cvs.getContext('2d');
+
+    const items = productData;
+    
+    const cardSize = 200;
+    const gap = 10;
+    const colCount = 5;
+    const padding = 30;
+
+    const rowCount = Math.ceil(items.length / colCount);
+    const contentWidth = (cardSize * colCount) + (gap * (colCount - 1));
+    const contentHeight = (cardSize * rowCount) + (gap * (rowCount - 1));
+
+    cvs.width = padding * 2 + contentWidth;
+    cvs.height = padding * 2 + contentHeight;
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+    const loadImage = (src) => new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = src;
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+    });
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const c = i % colCount;
+        const r = Math.floor(i / colCount);
+        
+        const x = padding + c * (cardSize + gap);
+        const y = padding + r * (cardSize + gap);
+
+        const isOwned = ownedItems.has(item.id);
+
+        const img = await loadImage(item.image);
+        if (img) {
+            ctx.save();
+            
+            ctx.beginPath();
+            ctx.rect(x, y, cardSize, cardSize);
+
+            // [핵심] 미보유 상품은 생성 이미지에서만 흑백 필터 적용
+            if (!isOwned) {
+                ctx.filter = 'grayscale(100%) opacity(0.6)';
+            }
+
+            const aspect = img.width / img.height;
+            let dw = cardSize, dh = cardSize;
+            if (aspect > 1) dw = cardSize * aspect; 
+            else dh = cardSize / aspect;
+            
+            ctx.drawImage(img, x + (cardSize - dw)/2, y + (cardSize - dh)/2, dw, dh);
+            
+            ctx.restore();
+        }
+    }
+
+    const link = document.createElement('a');
+    link.download = 'kenshi_goods_collection.jpg';
+    link.href = cvs.toDataURL('image/jpeg', 0.9);
+    link.click();
+
+    btn.innerText = originalText;
+    btn.disabled = false;
+}
+
+init();
