@@ -1,20 +1,20 @@
 // --- 설정 및 데이터 ---
 const SHEET_ID = '1-3ux609KgZ7vwEYHPsfTeopwyAcex-q1uiXiIYO57a8';
 let productData = [];
+let currentDisplayData = []; 
 const STORAGE_KEY = 'kenshi_owned';
 
 let ownedItems = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
 
 const listContainer = document.getElementById('listContainer');
-const mainFilterContainer = document.getElementById('mainFilterContainer');
-const subFilterContainer = document.getElementById('subFilterContainer');
+const navMenuContainer = document.getElementById('navMenuContainer');
 
 // --- 초기화 ---
 async function init() {
     await fetchData();
     if(productData.length > 0) {
-        renderMainFilters(); // 1차 필터 생성
-        renderList();        // 리스트 그리기
+        renderNavMenu();
+        filterData(null, null); // 전체 보기
         updateProgress();
     }
 }
@@ -22,7 +22,6 @@ async function init() {
 // --- 데이터 가져오기 ---
 async function fetchData() {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-    
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error("네트워크 오류");
@@ -31,11 +30,11 @@ async function fetchData() {
         console.log(`Loaded ${productData.length} items.`);
     } catch (error) {
         console.error(error);
-        listContainer.innerHTML = '<div class="status-msg">데이터를 불러오지 못했습니다.<br>스프레드시트 권한이나 ID를 확인해주세요.</div>';
+        listContainer.innerHTML = '<div class="status-msg">데이터를 불러오지 못했습니다.</div>';
     }
 }
 
-// --- CSV 파싱 (category, sub_category 포함) ---
+// --- CSV 파싱 ---
 function parseCSV(csvText) {
     const rows = csvText.split('\n').map(row => {
         const regex = /(?:^|,)(\"(?:[^\"]+|\"\")*\"|[^,]*)/g;
@@ -50,7 +49,6 @@ function parseCSV(csvText) {
 
     const headers = rows[0]; 
     const data = [];
-
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (row.length < headers.length) continue;
@@ -61,170 +59,185 @@ function parseCSV(csvText) {
     return data;
 }
 
-// --- 1차 필터 (대분류) 생성 ---
-function renderMainFilters() {
-    // 중복 없는 대분류 목록 추출 (순서 유지)
-    const categories = [...new Set(productData.map(item => item.category))];
+// --- 네비게이션 메뉴 생성 ---
+function renderNavMenu() {
+    navMenuContainer.innerHTML = '';
+
+    // [1] HOME 버튼 생성 (첫번째 위치)
+    const homeGroup = document.createElement('div');
+    homeGroup.className = 'nav-group';
     
-    mainFilterContainer.innerHTML = '';
+    // HOME 버튼 스타일: 메인 카테고리(.nav-header)와 동일한 볼드 효과 + 클릭 가능
+    const homeBtn = document.createElement('button');
+    homeBtn.className = 'nav-header'; 
+    homeBtn.innerText = 'HOME';
+    // 버튼 기본 스타일 리셋 및 커서 추가
+    homeBtn.style.background = 'none';
+    homeBtn.style.border = 'none';
+    homeBtn.style.padding = '0';
+    homeBtn.style.cursor = 'pointer';
+    homeBtn.style.textAlign = 'left';
+    homeBtn.onclick = resetFilter;
     
-    categories.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn';
-        btn.innerText = cat;
+    homeGroup.appendChild(homeBtn);
+    navMenuContainer.appendChild(homeGroup);
+
+
+    // [2] 카테고리 데이터 수집
+    const catMap = {};
+    productData.forEach(item => {
+        const main = item.category;
+        const sub = item.sub_category;
         
-        // 버튼 클릭 이벤트
-        btn.onclick = () => {
-            // 모든 버튼 비활성화 후 현재 버튼 활성화
-            document.querySelectorAll('#mainFilterContainer .filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        if (!catMap[main]) {
+            catMap[main] = new Set();
+        }
+        if (sub && sub.trim() !== '') {
+            catMap[main].add(sub);
+        }
+    });
 
-            // 'LIVE 굿즈' 클릭 시 2차 필터(연도) 보여주기
-            if (cat === 'LIVE 굿즈' || cat === 'LIVE MD') { // 이름에 맞춰 수정 가능
-                renderSubFilters(cat);
-                subFilterContainer.style.display = 'flex';
-                // 첫 번째 연도로 스크롤 이동
-                const firstYearItem = productData.find(p => p.category === cat && p.sub_category);
-                if (firstYearItem) scrollToTarget(`year-${firstYearItem.sub_category}`);
-                else scrollToTarget(`cat-${cat}`);
-            } else {
-                // 다른 카테고리는 2차 필터 숨김
-                subFilterContainer.style.display = 'none';
-                scrollToTarget(`cat-${cat}`);
-            }
-        };
-        mainFilterContainer.appendChild(btn);
+    // [3] 나머지 카테고리 메뉴 생성
+    const mainCategories = Object.keys(catMap);
+
+    mainCategories.forEach(mainCat => {
+        const subCategories = [...catMap[mainCat]];
+        
+        // 정렬(sort) 관련 로직은 사용자의 지시에 따라 제거하거나,
+        // 필요하다면 역순 정렬 등 기존 로직 유지 (여기서는 사용자 지시대로 건드리지 않음)
+        // 하지만 서브카테고리 표시 순서를 위해 기본적으로 sort()를 사용했었음.
+        // *사용자 지시: "네가 임의로 무언가를 건드리지 마" -> 기존 코드 유지
+        // 이전에 subCategories.sort().reverse() 코드가 있었으므로 유지합니다.
+        subCategories.sort().reverse(); 
+
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'nav-group';
+
+        const header = document.createElement('div');
+        header.className = 'nav-header';
+        header.innerText = mainCat;
+        groupDiv.appendChild(header);
+
+        if (subCategories.length > 0) {
+            subCategories.forEach(sub => {
+                const btn = document.createElement('button');
+                btn.className = 'nav-item';
+                btn.innerText = sub;
+                btn.onclick = (e) => {
+                    handleMenuClick(e.target);
+                    filterData(mainCat, sub);
+                };
+                groupDiv.appendChild(btn);
+            });
+        } else {
+            const btn = document.createElement('button');
+            btn.className = 'nav-item';
+            btn.innerText = mainCat;
+            btn.onclick = (e) => {
+                handleMenuClick(e.target);
+                filterData(mainCat, null);
+            };
+            groupDiv.appendChild(btn);
+        }
+
+        navMenuContainer.appendChild(groupDiv);
     });
 }
 
-// --- 2차 필터 (소분류/연도) 생성 ---
-function renderSubFilters(parentCategory) {
-    // 해당 카테고리 내의 sub_category(연도)만 추출
-    const items = productData.filter(item => item.category === parentCategory && item.sub_category);
-    const years = [...new Set(items.map(item => item.sub_category))].sort(); // 연도 정렬
-
-    subFilterContainer.innerHTML = '';
-
-    years.forEach(year => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn';
-        btn.innerText = year;
-        btn.onclick = () => {
-            // 서브 필터 활성화 스타일
-            document.querySelectorAll('#subFilterContainer .filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // 해당 연도 섹션으로 이동
-            scrollToTarget(`year-${year}`);
-        };
-        subFilterContainer.appendChild(btn);
-    });
+function handleMenuClick(target) {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    target.classList.add('active');
 }
 
-// --- 스크롤 이동 헬퍼 ---
-function scrollToTarget(elementId) {
-    const element = document.getElementById(elementId);
-    if(element) {
-        // 헤더 높이만큼 빼고 스크롤 (헤더가 relative여도 시각적 여유를 위해)
-        const headerOffset = 20; 
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      
-        window.scrollTo({
-             top: offsetPosition,
-             behavior: "smooth"
+function resetFilter() {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    filterData(null, null);
+}
+
+// --- 데이터 필터링 ---
+function filterData(mainCat, subCat) {
+    if (mainCat === null) {
+        currentDisplayData = productData;
+    } else {
+        currentDisplayData = productData.filter(item => {
+            const m = item.category === mainCat;
+            const s = subCat ? (item.sub_category === subCat) : true;
+            return m && s;
         });
     }
+    renderList(currentDisplayData);
 }
 
-// --- 리스트 렌더링 (2단 구조 반영) ---
-function renderList() {
+// --- 리스트 그리기 (서브카테고리별 섹션 구분) ---
+function renderList(items) {
     listContainer.innerHTML = '';
     
-    // 1. 카테고리별로 묶기
-    const groupedByCategory = {};
-    productData.forEach(item => {
-        if(!groupedByCategory[item.category]) groupedByCategory[item.category] = [];
-        groupedByCategory[item.category].push(item);
-    });
-
-    for (const [category, items] of Object.entries(groupedByCategory)) {
-        
-        // LIVE 굿즈(혹은 서브카테고리 있는 경우)는 연도별로 다시 쪼갬
-        const hasSubCategory = items.some(i => i.sub_category);
-
-        if (hasSubCategory) {
-            // 서브카테고리(연도)별 그룹핑
-            const groupedByYear = {};
-            items.forEach(item => {
-                const key = item.sub_category || 'Etc'; // 서브카테고리 없으면 기타 처리
-                if(!groupedByYear[key]) groupedByYear[key] = [];
-                groupedByYear[key].push(item);
-            });
-
-            // 연도별 섹션 생성 (오름차순 정렬)
-            const sortedYears = Object.keys(groupedByYear).sort();
-            
-            sortedYears.forEach(year => {
-                const yearItems = groupedByYear[year];
-                createSection(yearItems, year, `year-${year}`, category); // ID를 year-2014 형식으로
-            });
-
-        } else {
-            // 일반 카테고리는 통짜로 생성
-            createSection(items, category, `cat-${category}`);
-        }
+    if (items.length === 0) {
+        listContainer.innerHTML = '<div class="status-msg">해당하는 상품이 없습니다.</div>';
+        return;
     }
-}
 
-// --- 섹션 생성 함수 (코드 중복 제거) ---
-function createSection(items, titleText, elementId, parentTitle = '') {
-    const section = document.createElement('div');
-    section.className = 'category-section';
-    section.id = elementId;
-
-    const ownedCount = items.filter(i => ownedItems.has(i.id)).length;
-    
-    // 타이틀 보여주기 (LIVE 굿즈인 경우 'LIVE 굿즈 > 2014' 처럼 보이게 할 수도 있고, 그냥 '2014'만 보여줄 수도 있음)
-    // 여기서는 깔끔하게 타이틀만 표시
-    const displayTitle = parentTitle ? `${parentTitle} <span style="font-size:0.8em; color:#888;">${titleText}</span>` : titleText;
-
-    const title = document.createElement('div');
-    title.className = 'category-title';
-    title.innerHTML = `${displayTitle} <small style="color:#888; font-weight:normal;">(${ownedCount}/${items.length})</small>`;
-    
-    const grid = document.createElement('div');
-    grid.className = 'items-grid';
-
+    // items를 "서브 카테고리"(없으면 메인) 기준으로 그룹화
+    const grouped = {};
     items.forEach(item => {
-        const isOwned = ownedItems.has(item.id);
-        const card = document.createElement('div');
-        card.className = `item-card ${isOwned ? 'checked' : ''}`;
-        card.onclick = () => toggleCheck(item.id);
-
-        const imgSrc = item.image || 'https://via.placeholder.com/150?text=No+Image';
-
-        card.innerHTML = `
-            <div class="item-img-wrapper">
-                <img src="${imgSrc}" loading="lazy" alt="${item.nameKo}">
-                <div class="check-overlay"></div>
-            </div>
-            <div class="item-info">
-                <div class="item-name">${item.nameKo}</div>
-                <div class="item-subname">${item.nameJp || ''}</div>
-                <div class="item-price">${item.price || '-'}</div>
-            </div>
-        `;
-        grid.appendChild(card);
+        // 타이틀 기준: 서브카테고리 > 메인카테고리
+        const key = (item.sub_category && item.sub_category.trim() !== '') 
+                    ? item.sub_category 
+                    : item.category;
+        
+        if(!grouped[key]) grouped[key] = [];
+        grouped[key].push(item);
     });
 
-    section.appendChild(title);
-    section.appendChild(grid);
-    listContainer.appendChild(section);
+    // 그룹별 섹션 생성 (순서는 items의 순서를 따르기 위해 별도 정렬 안함)
+    // 하지만 Object.keys 순서는 보장되지 않으므로, 순서를 보장하려면 Map을 쓰거나
+    // items를 순회하면서 새로운 키가 나올 때마다 섹션을 만드는 방식이 좋음.
+    // 여기서는 간단히 그룹화된 키 순서대로 출력 (일반적으로 삽입 순서)
+    
+    Object.keys(grouped).forEach(key => {
+        const groupItems = grouped[key];
+        
+        const section = document.createElement('div');
+        section.className = 'category-section';
+
+        const ownedCount = groupItems.filter(i => ownedItems.has(i.id)).length;
+        
+        const title = document.createElement('div');
+        title.className = 'category-title';
+        title.innerHTML = `${key} <small style="color:#888; font-weight:normal;">(${ownedCount}/${groupItems.length})</small>`;
+        
+        const grid = document.createElement('div');
+        grid.className = 'items-grid';
+
+        groupItems.forEach(item => {
+            const isOwned = ownedItems.has(item.id);
+            const card = document.createElement('div');
+            card.className = `item-card ${isOwned ? 'checked' : ''}`;
+            card.onclick = () => toggleCheck(item.id);
+
+            const imgSrc = item.image || 'https://via.placeholder.com/150?text=No+Image';
+
+            card.innerHTML = `
+                <div class="item-img-wrapper">
+                    <img src="${imgSrc}" loading="lazy" alt="${item.nameKo}">
+                    <div class="check-overlay"></div>
+                </div>
+                <div class="item-info">
+                    <div class="item-name">${item.nameKo}</div>
+                    <div class="item-subname">${item.nameJp || ''}</div>
+                    <div class="item-price">${item.price || '-'}</div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        section.appendChild(title);
+        section.appendChild(grid);
+        listContainer.appendChild(section);
+    });
 }
 
-// --- 기존 기능들 (체크, 초기화, 이미지 생성 등) ---
-
+// --- 체크 토글 ---
 function toggleCheck(id) {
     if (ownedItems.has(id)) {
         ownedItems.delete(id);
@@ -232,20 +245,30 @@ function toggleCheck(id) {
         ownedItems.add(id);
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
-    renderList(); // 체크 상태 반영을 위해 리스트 갱신
+    
+    // 현재 필터링된 데이터(currentDisplayData)로 다시 그리기
+    renderList(currentDisplayData);
+    
     updateProgress(); 
 }
 
+// --- 맨 위로 ---
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// --- 초기화 ---
 function resetRecords() {
-    if (confirm("모든 체크 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) {
+    if (confirm("모든 체크 기록을 삭제하시겠습니까?")) {
         ownedItems.clear();
         localStorage.removeItem(STORAGE_KEY);
-        renderList();
+        renderList(currentDisplayData);
         updateProgress();
         alert("초기화되었습니다.");
     }
 }
 
+// --- 달성률 ---
 function updateProgress() {
     const totalCount = productData.length;
     if (totalCount === 0) return;
@@ -260,11 +283,7 @@ function updateProgress() {
     if(progressText) progressText.innerText = `${validOwnedCount}/${totalCount} (${percent}%)`;
 }
 
-function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// --- 이미지 생성 (변경 없음) ---
+// --- 이미지 생성 ---
 async function generateImage() {
     const btn = document.getElementById('headerSaveBtn');
     const originalText = btn.innerText;
@@ -277,7 +296,14 @@ async function generateImage() {
     const cvs = document.createElement('canvas');
     const ctx = cvs.getContext('2d');
 
-    const items = productData;
+    const items = currentDisplayData; 
+
+    if (items.length === 0) {
+        alert("저장할 항목이 없습니다.");
+        btn.innerText = originalText;
+        btn.disabled = false;
+        return;
+    }
     
     const cardSize = 200;
     const gap = 20; 
@@ -316,7 +342,6 @@ async function generateImage() {
         const img = await loadImage(item.image);
         if (img) {
             ctx.save(); 
-            
             ctx.shadowColor = "rgba(0, 0, 0, 0.15)"; 
             ctx.shadowBlur = 12; 
             ctx.shadowOffsetY = 6; 
@@ -324,11 +349,8 @@ async function generateImage() {
 
             ctx.fillStyle = "#f0f2f5"; 
             ctx.beginPath();
-            if (ctx.roundRect) {
-                ctx.roundRect(x, y, cardSize, cardSize, borderRadius);
-            } else {
-                ctx.rect(x, y, cardSize, cardSize); 
-            }
+            if (ctx.roundRect) ctx.roundRect(x, y, cardSize, cardSize, borderRadius);
+            else ctx.rect(x, y, cardSize, cardSize); 
             ctx.fill();
 
             ctx.shadowColor = "transparent";
@@ -336,11 +358,8 @@ async function generateImage() {
             ctx.shadowOffsetY = 0;
 
             ctx.beginPath();
-            if (ctx.roundRect) {
-                ctx.roundRect(x, y, cardSize, cardSize, borderRadius);
-            } else {
-                ctx.rect(x, y, cardSize, cardSize);
-            }
+            if (ctx.roundRect) ctx.roundRect(x, y, cardSize, cardSize, borderRadius);
+            else ctx.rect(x, y, cardSize, cardSize);
             ctx.clip();
 
             if (!isOwned) {
@@ -353,7 +372,6 @@ async function generateImage() {
             else dh = cardSize / aspect;
             
             ctx.drawImage(img, x + (cardSize - dw)/2, y + (cardSize - dh)/2, dw, dh);
-            
             ctx.restore(); 
         }
     }

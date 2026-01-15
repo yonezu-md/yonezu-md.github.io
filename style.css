@@ -17,24 +17,25 @@ body {
 /* 상단 헤더 */
 header {
     background-color: var(--card-bg);
-    padding: 20px 20px 10px 20px;
+    padding: 30px 20px;
     text-align: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     position: relative; 
 }
 
 h1 {
-    margin: 0 0 15px 0;
-    font-size: 1.5rem;
+    margin: 0 0 20px 0;
+    font-size: 1.8rem;
+    font-weight: 900;
     color: var(--primary-color);
+    letter-spacing: -0.5px;
 }
 
-/* 상단 버튼 그룹 스타일 */
 .header-btns {
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 30px;
 }
 
 .header-btn {
@@ -48,104 +49,69 @@ h1 {
     transition: all 0.2s;
 }
 
-.header-btn.save {
-    background-color: var(--primary-color);
-    color: white;
-}
-.header-btn.save:hover {
-    background-color: #2a3b75;
-}
+.header-btn.save { background-color: var(--primary-color); color: white; }
+.header-btn.save:hover { background-color: #2a3b75; }
 
-.header-btn.reset {
-    background-color: #eee;
-    color: #666;
-}
-.header-btn.reset:hover {
-    background-color: #ddd;
-    color: #333;
-}
+.header-btn.reset { background-color: #eee; color: #666; }
+.header-btn.reset:hover { background-color: #ddd; color: #333; }
 
-/* 하단 플로팅 프로그레스 바 */
-.floating-progress {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%); /* 중앙 정렬 */
-    width: 90%;
-    max-width: 400px;
-    background-color: #FFFFFF;
-    border-radius: 20px;
-    padding: 15px 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    z-index: 900; 
-}
-
-.progress-info {
+/* 네비게이션 메뉴 스타일 */
+#navMenuContainer {
     display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-    color: #666;
+    flex-wrap: wrap;       
+    justify-content: center; 
+    gap: 40px;             
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.nav-group {
+    display: flex;
+    flex-direction: column; 
+    min-width: 120px;       
+}
+
+.nav-header {
+    font-size: 1.1rem;
+    font-weight: 900;       
+    color: #000;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.nav-item {
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 6px 0;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #555;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.2s;
+    line-height: 1.4;
+}
+
+.nav-item:hover {
+    color: var(--primary-color);
     font-weight: bold;
 }
 
-.progress-text {
+.nav-item.active {
     color: var(--primary-color);
+    font-weight: bold;
+    /* 점 표시(:before) 삭제됨 */
 }
 
-.progress-track {
-    width: 100%;
-    height: 8px;
-    background-color: #eee;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    background-color: var(--primary-color);
-    width: 0%;
-    transition: width 0.3s ease;
-}
-
-/* 필터 버튼 */
-.filter-container {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding-bottom: 10px;
-    justify-content: center;
-    scrollbar-width: none;
-}
-.filter-container::-webkit-scrollbar { display: none; }
-
-.filter-btn {
-    background: none;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: #666;
-    transition: all 0.2s;
-}
-
-.filter-btn:hover, .filter-btn.active {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
+/* 리스트 컨테이너 */
 #listContainer {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
-.category-section {
-    margin-bottom: 40px;
-}
+.category-section { margin-bottom: 40px; }
 
 .category-title {
     font-size: 1.2rem;
@@ -173,8 +139,6 @@ h1 {
 }
 
 .item-card:hover { transform: translateY(-3px); }
-
-/* 체크되면 테두리 색상 변경 */
 .item-card.checked { border-color: var(--primary-color); }
 
 .item-img-wrapper {
@@ -194,7 +158,6 @@ h1 {
     transition: all 0.3s ease;
 }
 
-/* 체크 버튼 스타일 */
 .check-overlay {
     position: absolute;
     top: 10px;
@@ -215,31 +178,26 @@ h1 {
     display: flex;
     background-color: var(--primary-color);
 }
-
 .item-card.checked .check-overlay::after { content: '✔'; }
 
 .item-info { padding: 10px; }
-
 .item-name {
     font-size: 0.95rem;
     font-weight: bold;
     margin-bottom: 4px;
     word-break: keep-all;
 }
-
 .item-subname {
     font-size: 0.8rem;
     color: #888;
     margin-bottom: 5px;
 }
-
 .item-price {
     font-size: 0.85rem;
     color: var(--primary-color);
     font-weight: bold;
 }
 
-/* 플로팅 버튼 (탑 버튼) */
 .floating-btns {
     position: fixed;
     bottom: 30px;
@@ -263,66 +221,54 @@ h1 {
     transition: transform 0.2s;
     padding: 0;
 }
-
-.float-btn img {
-    width: 30px;
-    height: 30px;
-    object-fit: contain;
-}
-
+.float-btn img { width: 30px; height: 30px; object-fit: contain; }
 .float-btn:hover { transform: scale(1.1); }
+
+.floating-progress {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background-color: #FFFFFF;
+    border-radius: 20px;
+    padding: 15px 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    z-index: 900; 
+}
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: #666;
+    font-weight: bold;
+}
+.progress-text { color: var(--primary-color); }
+.progress-track {
+    width: 100%;
+    height: 8px;
+    background-color: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-bar {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
 
 .status-msg { text-align: center; padding: 50px; color: #888; }
 
-/* 모바일 대응 스타일 */
 @media (max-width: 600px) {
+    #navMenuContainer { gap: 20px; justify-content: flex-start; }
+    .nav-group { min-width: 45%; } 
+    
     .items-grid { grid-template-columns: repeat(2, 1fr); }
-    .filter-container { justify-content: flex-start; }
-    
-    /* 탑 버튼 위치 및 크기 */
-    .floating-btns {
-        bottom: 25px;
-        right: 15px; /* 약간 더 바깥쪽으로 */
-    }
-    .float-btn {
-        width: 40px;
-        height: 40px;
-    }
-    .float-btn img {
-        width: 22px;
-        height: 22px;
-    }
-
-    /* [수정] 모바일 플로팅 프로그레스 바 축소 */
-    .floating-progress {
-        width: 60%; /* 너비를 줄여 우측 버튼과 겹침 방지 */
-        padding: 10px 15px; /* 패딩 축소 */
-        bottom: 20px; /* 바닥에서 높이 */
-        border-radius: 15px;
-    }
-    
-    .progress-info {
-        font-size: 0.8rem; /* 폰트 사이즈 축소 */
-        margin-bottom: 5px;
-    }
-    
-    .progress-track {
-        height: 6px; /* 바 높이 축소 */
-    }
-}
-
-/* ... (위에 있는 기존 코드 절대 건드리지 않음) ... */
-
-/* [추가] 서브 필터 스타일 (약간 작게 표시) */
-.sub-filter .filter-btn {
-    font-size: 0.85rem;
-    padding: 6px 12px;
-    background-color: #f0f0f0; /* 배경색을 살짝 다르게 */
-    border-color: #eee;
-}
-
-.sub-filter .filter-btn.active {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
+    .floating-btns { bottom: 25px; right: 15px; }
+    .float-btn { width: 40px; height: 40px; }
+    .float-btn img { width: 22px; height: 22px; }
+    .floating-progress { width: 60%; padding: 10px 15px; bottom: 20px; }
 }
