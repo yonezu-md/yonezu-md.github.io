@@ -141,7 +141,7 @@ function toggleCheck(id) {
     renderList();
 }
 
-// --- 이미지 생성 (체크 안 된 건 여기서 흑백 처리) ---
+// --- 이미지 생성 (수정됨: 둥근 모서리, 연회색 배경, 그림자 적용) ---
 async function generateImage() {
     const btn = document.getElementById('saveBtn');
     const originalText = btn.innerText;
@@ -156,9 +156,9 @@ async function generateImage() {
     const items = productData;
     
     const cardSize = 200;
-    const gap = 10;
+    const gap = 20; // 그림자 공간을 위해 간격을 조금 늘림
     const colCount = 5;
-    const padding = 30;
+    const padding = 40; // 전체 여백도 조금 늘림
 
     const rowCount = Math.ceil(items.length / colCount);
     const contentWidth = (cardSize * colCount) + (gap * (colCount - 1));
@@ -167,6 +167,7 @@ async function generateImage() {
     cvs.width = padding * 2 + contentWidth;
     cvs.height = padding * 2 + contentHeight;
 
+    // 전체 배경은 흰색
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, cvs.width, cvs.height);
 
@@ -185,21 +186,54 @@ async function generateImage() {
         
         const x = padding + c * (cardSize + gap);
         const y = padding + r * (cardSize + gap);
+        const borderRadius = 15; // 모서리 둥글기 정도
 
         const isOwned = ownedItems.has(item.id);
 
         const img = await loadImage(item.image);
         if (img) {
-            ctx.save();
-            
-            ctx.beginPath();
-            ctx.rect(x, y, cardSize, cardSize);
+            ctx.save(); // 전체 상태 저장
 
-            // [핵심] 미보유 상품은 생성 이미지에서만 흑백 필터 적용
+            // --- 1. 카드 배경 및 그림자 그리기 ---
+            
+            // 그림자 설정
+            ctx.shadowColor = "rgba(0, 0, 0, 0.15)"; // 자연스러운 연한 검은색 그림자
+            ctx.shadowBlur = 12; // 그림자 흐림 정도
+            ctx.shadowOffsetY = 6; // 약간 아래로 내려오게
+            ctx.shadowOffsetX = 0;
+
+            // 연회색 배경 그리기 (이 도형이 그림자를 만듦)
+            ctx.fillStyle = "#f0f2f5"; // 아주 연한 회색
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(x, y, cardSize, cardSize, borderRadius);
+            } else {
+                ctx.rect(x, y, cardSize, cardSize); // 구형 브라우저 호환
+            }
+            ctx.fill();
+
+            // --- 2. 이미지 클리핑 및 그리기 ---
+
+            // 이미지를 그릴 때는 그림자가 중복되지 않게 초기화
+            ctx.shadowColor = "transparent";
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+
+            // 이미지를 둥근 사각형 안에 가두기 위해 클리핑 영역 설정
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(x, y, cardSize, cardSize, borderRadius);
+            } else {
+                ctx.rect(x, y, cardSize, cardSize);
+            }
+            ctx.clip();
+
+            // 미보유 상품 흑백 필터 적용 (조금 더 자연스럽게 투명도 조절)
             if (!isOwned) {
-                ctx.filter = 'grayscale(100%) opacity(0.6)';
+                ctx.filter = 'grayscale(100%) opacity(0.7)';
             }
 
+            // 이미지 비율 맞춰 중앙 정렬 그리기
             const aspect = img.width / img.height;
             let dw = cardSize, dh = cardSize;
             if (aspect > 1) dw = cardSize * aspect; 
@@ -207,7 +241,7 @@ async function generateImage() {
             
             ctx.drawImage(img, x + (cardSize - dw)/2, y + (cardSize - dh)/2, dw, dh);
             
-            ctx.restore();
+            ctx.restore(); // 전체 상태 복구 (다음 루프를 위해)
         }
     }
 
