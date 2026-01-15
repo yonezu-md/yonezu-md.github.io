@@ -1,0 +1,226 @@
+:root {
+    --primary-color: #4A6E75; /* 요네즈 켄시 테마 컬러 (청록색) */
+    --bg-color: #f5f5f5;
+    --card-bg: #ffffff;
+    --text-color: #333;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    padding-bottom: 80px; /* 하단 버튼 여백 */
+}
+
+/* 상단 헤더 & 필터 */
+header {
+    background-color: var(--card-bg);
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+h1 {
+    margin: 0 0 15px 0;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.filter-container {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 5px;
+    justify-content: center;
+    scrollbar-width: none;
+}
+.filter-container::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-btn {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover, .filter-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* 메인 컨텐츠 */
+#listContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.category-section {
+    margin-bottom: 40px;
+    scroll-margin-top: 140px; /* 헤더에 가려지지 않게 여백 조정 */
+}
+
+.category-title {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    border-left: 5px solid var(--primary-color);
+    padding-left: 10px;
+    color: #444;
+}
+
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+/* 아이템 카드 */
+.item-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.item-card:hover {
+    transform: translateY(-3px);
+}
+
+.item-card.checked {
+    border-color: var(--primary-color);
+}
+
+.item-img-wrapper {
+    width: 100%;
+    padding-top: 100%; /* 1:1 비율 유지 */
+    position: relative;
+    background-color: #eee;
+}
+
+.item-img-wrapper img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* 핵심: 미보유 시 흑백 처리 */
+    filter: grayscale(100%); 
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.item-card.checked .item-img-wrapper img {
+    filter: none; /* 체크 시 컬러 복구 */
+    opacity: 1;
+}
+
+.check-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.item-card.checked .check-overlay {
+    background: var(--primary-color);
+}
+
+.item-card.checked .check-overlay::after {
+    content: '✔';
+}
+
+.item-info {
+    padding: 10px;
+}
+
+.item-name {
+    font-size: 0.95rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+    word-break: keep-all;
+}
+
+.item-subname {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.item-price {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+/* 하단 저장 버튼 */
+.save-btn-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999;
+}
+
+.save-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.save-btn:hover {
+    transform: scale(1.05);
+}
+
+.save-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* 로딩/에러 메시지 */
+.status-msg {
+    text-align: center;
+    padding: 50px;
+    color: #888;
+}
+
+@media (max-width: 600px) {
+    .items-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .filter-container {
+        justify-content: flex-start; /* 모바일: 가로 스크롤 허용 */
+    }
+}
