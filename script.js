@@ -60,6 +60,13 @@ function parseCSV(csvText) {
     return data;
 }
 
+// --- [추가] 타이틀 클릭 시 실행될 홈 함수 ---
+function goHome() {
+    resetFilter();
+    closeSidebar();
+    scrollToTop();
+}
+
 // --- 네비게이션 메뉴 및 사이드바 생성 ---
 function renderNavMenu() {
     navMenuContainer.innerHTML = '';
@@ -74,10 +81,7 @@ function renderNavMenu() {
         const homeBtn = document.createElement('button');
         homeBtn.className = 'nav-header'; 
         homeBtn.innerText = 'HOME';
-        homeBtn.onclick = () => {
-            resetFilter();
-            closeSidebar(); 
-        };
+        homeBtn.onclick = goHome; // goHome 연결
         homeGroup.appendChild(homeBtn);
 
         // 이미지 저장 버튼
@@ -119,11 +123,9 @@ function renderNavMenu() {
     for (const [mainCat, subSet] of catMap) {
         const subCats = [...subSet];
         
-        // PC용 그룹 생성
         const pcGroup = createCategoryGroup(mainCat, subCats, false);
         navMenuContainer.appendChild(pcGroup);
 
-        // 모바일용 그룹 생성
         const mobileGroup = createCategoryGroup(mainCat, subCats, true);
         sidebarContent.appendChild(mobileGroup);
     }
@@ -307,28 +309,22 @@ function updateProgress() {
     if(progressText) progressText.innerText = `${validOwnedCount}/${totalCount} (${percent}%)`;
 }
 
-// --- [수정된 기능] 체크된 상품만 모아서 이미지 생성 ---
 async function generateImage() {
-    // 1. 폰트 로드 대기
     await document.fonts.ready;
 
     const cvs = document.createElement('canvas');
     const ctx = cvs.getContext('2d');
 
-    // 2. 전체 데이터 중 '체크된(owned)' 상품만 필터링
     const items = productData.filter(item => ownedItems.has(item.id));
 
-    // 3. 체크된 상품이 하나도 없으면 경고 후 종료
     if (items.length === 0) {
         alert("선택된 상품이 없습니다.");
         return;
     }
     
-    // 안내 (선택사항)
     const userConfirm = confirm(`총 ${items.length}개의 수집품을 저장하시겠습니까?`);
     if(!userConfirm) return;
 
-    // --- 캔버스 사이즈 계산 ---
     const cardSize = 200;
     const gap = 20; 
     const colCount = 5;
@@ -341,7 +337,6 @@ async function generateImage() {
     cvs.width = padding * 2 + contentWidth;
     cvs.height = padding * 2 + contentHeight;
 
-    // 배경 흰색 채우기
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, cvs.width, cvs.height);
 
@@ -353,7 +348,6 @@ async function generateImage() {
         img.onerror = () => resolve(null);
     });
 
-    // --- 상품 그리기 Loop ---
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const c = i % colCount;
@@ -363,24 +357,20 @@ async function generateImage() {
         const y = padding + r * (cardSize + gap);
         const borderRadius = 15; 
 
-        // 이미지 로드
         const img = await loadImage(item.image);
         if (img) {
             ctx.save(); 
-            // 그림자
             ctx.shadowColor = "rgba(0, 0, 0, 0.15)"; 
             ctx.shadowBlur = 12; 
             ctx.shadowOffsetY = 6; 
             ctx.shadowOffsetX = 0;
 
-            // 카드 배경
             ctx.fillStyle = "#f0f2f5"; 
             ctx.beginPath();
             if (ctx.roundRect) ctx.roundRect(x, y, cardSize, cardSize, borderRadius);
             else ctx.rect(x, y, cardSize, cardSize); 
             ctx.fill();
 
-            // 클리핑 (둥근 모서리)
             ctx.shadowColor = "transparent";
             ctx.shadowBlur = 0;
             ctx.shadowOffsetY = 0;
@@ -390,9 +380,6 @@ async function generateImage() {
             else ctx.rect(x, y, cardSize, cardSize);
             ctx.clip();
 
-            // [변경] 흑백 처리 로직 삭제됨 (무조건 컬러 출력)
-
-            // 이미지 리사이징 및 그리기 (Cover 모드)
             const aspect = img.width / img.height;
             let dw = cardSize, dh = cardSize;
             if (aspect > 1) dw = cardSize * aspect; 
@@ -403,7 +390,6 @@ async function generateImage() {
         }
     }
 
-    // 다운로드 트리거
     const link = document.createElement('a');
     link.download = 'kenshi_collection_export.jpg';
     link.href = cvs.toDataURL('image/jpeg', 0.9);
