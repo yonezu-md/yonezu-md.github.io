@@ -51,7 +51,6 @@ h1 {
     font-weight: 900;
     color: var(--primary-color);
     letter-spacing: -0.5px;
-    /* [수정] 클릭 가능하다는 표시 */
     cursor: pointer; 
 }
 
@@ -291,7 +290,17 @@ h1 {
     display: flex;
     background-color: var(--primary-color);
 }
-.item-card.checked .check-overlay::after { content: '✔'; }
+
+/* [수정] 텍스트 체크(✔) 대신 이미지 아이콘으로 변경 */
+.item-card.checked .check-overlay::after {
+    content: '';
+    width: 14px;  /* 아이콘 너비 (동그라미가 28px이니 절반 정도) */
+    height: 14px; /* 아이콘 높이 */
+    background-image: url('img/check.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
 
 
 .item-info { padding: 10px; }
