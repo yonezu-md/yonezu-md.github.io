@@ -65,30 +65,48 @@ function renderNavMenu() {
     navMenuContainer.innerHTML = '';
     sidebarContent.innerHTML = '';
 
-    // [1] HOME 버튼 (PC/모바일 공통)
+    // [1] HOME 그룹 생성
     const createHomeGroup = () => {
         const homeGroup = document.createElement('div');
         homeGroup.className = 'nav-group';
+        
+        // HOME 버튼
         const homeBtn = document.createElement('button');
         homeBtn.className = 'nav-header'; 
         homeBtn.innerText = 'HOME';
-        homeBtn.style.background = 'none';
-        homeBtn.style.border = 'none';
-        homeBtn.style.padding = '0';
-        homeBtn.style.cursor = 'pointer';
-        homeBtn.style.textAlign = 'left';
         homeBtn.onclick = () => {
             resetFilter();
             closeSidebar(); 
         };
         homeGroup.appendChild(homeBtn);
+
+        // 이미지 저장 버튼
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'nav-item nav-action'; 
+        saveBtn.innerText = '이미지 저장';
+        saveBtn.onclick = () => {
+            generateImage();
+            closeSidebar(); 
+        };
+        homeGroup.appendChild(saveBtn);
+
+        // 기록 초기화 버튼
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'nav-item nav-action';
+        resetBtn.innerText = '기록 초기화';
+        resetBtn.onclick = () => {
+            resetRecords();
+            closeSidebar();
+        };
+        homeGroup.appendChild(resetBtn);
+
         return homeGroup;
     };
 
     navMenuContainer.appendChild(createHomeGroup());
     sidebarContent.appendChild(createHomeGroup());
 
-    // [2] 카테고리 데이터 수집 (시트 순서 유지)
+    // [2] 카테고리 데이터 수집
     const catMap = new Map();
     productData.forEach(item => {
         const main = item.category;
@@ -97,14 +115,10 @@ function renderNavMenu() {
         if (sub && sub.trim() !== '') catMap.get(main).add(sub);
     });
 
-    // [3] 카테고리 순회하며 버튼 생성 (순서대로)
+    // [3] 카테고리 순회하며 버튼 생성
     for (const [mainCat, subSet] of catMap) {
         const subCats = [...subSet];
-        // *정렬 로직 제거: 형님이 원하시는 대로 시트 순서만 따르거나, 
-        // 만약 기존처럼 서브카테고리만 역순(최신순)을 원하시면 
-        // 아래 줄 주석 해제하세요. 지금은 시트 순서 그대로 갑니다.
-        // subCats.sort().reverse(); 
-
+        
         // PC용 그룹 생성
         const pcGroup = createCategoryGroup(mainCat, subCats, false);
         navMenuContainer.appendChild(pcGroup);
@@ -119,9 +133,16 @@ function createCategoryGroup(mainCat, subCats, isMobile) {
     const groupDiv = document.createElement('div');
     groupDiv.className = 'nav-group';
 
-    const header = document.createElement('div');
+    const header = document.createElement('button');
     header.className = 'nav-header';
     header.innerText = mainCat;
+    
+    header.onclick = (e) => {
+        handleMenuClick(e.target); 
+        filterData(mainCat, null); 
+        if(isMobile) closeSidebar();
+    };
+    
     groupDiv.appendChild(header);
 
     if (subCats.length > 0) {
@@ -136,17 +157,7 @@ function createCategoryGroup(mainCat, subCats, isMobile) {
             };
             groupDiv.appendChild(btn);
         });
-    } else {
-        const btn = document.createElement('button');
-        btn.className = 'nav-item';
-        btn.innerText = mainCat;
-        btn.onclick = (e) => {
-            handleMenuClick(e.target);
-            filterData(mainCat, null);
-            if(isMobile) closeSidebar();
-        };
-        groupDiv.appendChild(btn);
-    }
+    } 
     return groupDiv;
 }
 
@@ -171,12 +182,12 @@ function closeSidebar() {
 }
 
 function handleMenuClick(target) {
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-item, .nav-header').forEach(b => b.classList.remove('active'));
     target.classList.add('active');
 }
 
 function resetFilter() {
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-item, .nav-header').forEach(b => b.classList.remove('active'));
     renderAllList(); 
 }
 
@@ -264,8 +275,6 @@ function toggleCheck(id) {
         ownedItems.add(id);
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
-    
-    // 현재 보고 있는 리스트 유지
     renderList(currentDisplayData);
     updateProgress(); 
 }
@@ -298,27 +307,28 @@ function updateProgress() {
     if(progressText) progressText.innerText = `${validOwnedCount}/${totalCount} (${percent}%)`;
 }
 
+// --- [수정된 기능] 체크된 상품만 모아서 이미지 생성 ---
 async function generateImage() {
-    const btn = document.getElementById('headerSaveBtn');
-    const originalText = btn.innerText;
-    
-    btn.innerText = "생성 중...";
-    btn.disabled = true;
-
+    // 1. 폰트 로드 대기
     await document.fonts.ready;
 
     const cvs = document.createElement('canvas');
     const ctx = cvs.getContext('2d');
 
-    const items = currentDisplayData;
+    // 2. 전체 데이터 중 '체크된(owned)' 상품만 필터링
+    const items = productData.filter(item => ownedItems.has(item.id));
 
+    // 3. 체크된 상품이 하나도 없으면 경고 후 종료
     if (items.length === 0) {
-        alert("저장할 항목이 없습니다.");
-        btn.innerText = originalText;
-        btn.disabled = false;
+        alert("선택된 상품이 없습니다.");
         return;
     }
     
+    // 안내 (선택사항)
+    const userConfirm = confirm(`총 ${items.length}개의 수집품을 저장하시겠습니까?`);
+    if(!userConfirm) return;
+
+    // --- 캔버스 사이즈 계산 ---
     const cardSize = 200;
     const gap = 20; 
     const colCount = 5;
@@ -331,6 +341,7 @@ async function generateImage() {
     cvs.width = padding * 2 + contentWidth;
     cvs.height = padding * 2 + contentHeight;
 
+    // 배경 흰색 채우기
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, cvs.width, cvs.height);
 
@@ -342,6 +353,7 @@ async function generateImage() {
         img.onerror = () => resolve(null);
     });
 
+    // --- 상품 그리기 Loop ---
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const c = i % colCount;
@@ -351,22 +363,24 @@ async function generateImage() {
         const y = padding + r * (cardSize + gap);
         const borderRadius = 15; 
 
-        const isOwned = ownedItems.has(item.id);
-
+        // 이미지 로드
         const img = await loadImage(item.image);
         if (img) {
             ctx.save(); 
+            // 그림자
             ctx.shadowColor = "rgba(0, 0, 0, 0.15)"; 
             ctx.shadowBlur = 12; 
             ctx.shadowOffsetY = 6; 
             ctx.shadowOffsetX = 0;
 
+            // 카드 배경
             ctx.fillStyle = "#f0f2f5"; 
             ctx.beginPath();
             if (ctx.roundRect) ctx.roundRect(x, y, cardSize, cardSize, borderRadius);
             else ctx.rect(x, y, cardSize, cardSize); 
             ctx.fill();
 
+            // 클리핑 (둥근 모서리)
             ctx.shadowColor = "transparent";
             ctx.shadowBlur = 0;
             ctx.shadowOffsetY = 0;
@@ -376,10 +390,9 @@ async function generateImage() {
             else ctx.rect(x, y, cardSize, cardSize);
             ctx.clip();
 
-            if (!isOwned) {
-                ctx.filter = 'grayscale(100%) opacity(0.7)';
-            }
+            // [변경] 흑백 처리 로직 삭제됨 (무조건 컬러 출력)
 
+            // 이미지 리사이징 및 그리기 (Cover 모드)
             const aspect = img.width / img.height;
             let dw = cardSize, dh = cardSize;
             if (aspect > 1) dw = cardSize * aspect; 
@@ -390,13 +403,11 @@ async function generateImage() {
         }
     }
 
+    // 다운로드 트리거
     const link = document.createElement('a');
-    link.download = 'kenshi_goods_collection.jpg';
+    link.download = 'kenshi_collection_export.jpg';
     link.href = cvs.toDataURL('image/jpeg', 0.9);
     link.click();
-
-    btn.innerText = originalText;
-    btn.disabled = false;
 }
 
 init();
