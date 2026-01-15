@@ -21,8 +21,7 @@
 }
 
 body {
-    /* 기본 폰트 변경: Pretendard */
-    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+    font-family: 'Pretendard', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
     margin: 0;
@@ -37,12 +36,15 @@ header {
     text-align: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     position: relative;
-    /* 모바일 헤더 고정을 위한 기본 설정 */
-    z-index: 1010; 
+    z-index: 1010; /* 모바일 오버레이보다 아래, 콘텐츠보다 위 */
+}
+
+/* 헤더 상단 로우 (모바일에서 타이틀과 햄버거 정렬용) */
+.header-top-row {
+    position: relative;
 }
 
 h1 {
-    /* 타이틀 폰트 변경: Paperlogy */
     font-family: 'Paperlogy', sans-serif;
     margin: 0 0 20px 0;
     font-size: 1.8rem;
@@ -59,7 +61,6 @@ h1 {
 }
 
 .header-btn {
-    /* 버튼 폰트 변경 */
     font-family: 'Paperlogy', sans-serif;
     border: none;
     border-radius: 8px;
@@ -76,15 +77,29 @@ h1 {
 .header-btn.reset { background-color: #eee; color: #666; }
 .header-btn.reset:hover { background-color: #ddd; color: #333; }
 
-/* PC 네비게이션 메뉴 */
+/* =========================================
+   [PC] 네비게이션 메뉴 스타일 (3단 그리드 복구)
+   ========================================= */
 #navMenuContainer {
-    display: flex;
-    flex-wrap: wrap;       
-    justify-content: center; 
-    gap: 40px;             
-    max-width: 1000px;
+    display: flex; /* PC 기본 */
+    justify-content: center;
     margin: 0 auto;
+    max-width: 1000px;
+}
+
+/* PC 레이아웃 깨짐 해결을 위한 그리드 스타일 복구 */
+.nav-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* 3단 컬럼 강제 */
+    gap: 40px;
+    width: 100%;
     text-align: left;
+}
+
+.nav-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* 그룹 간 간격 */
 }
 
 .nav-group {
@@ -94,20 +109,21 @@ h1 {
 }
 
 .nav-header {
-    /* 카테고리 헤더 폰트 변경 */
     font-family: 'Paperlogy', sans-serif;
     font-size: 1.1rem;
     font-weight: 900;       
     color: #000;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     text-transform: uppercase;
+    border-bottom: 2px solid #333; /* PC 디자인 복구 */
+    padding-bottom: 5px;
 }
 
 .nav-item {
     background: none;
     border: none;
     text-align: left;
-    padding: 6px 0;
+    padding: 4px 0;
     cursor: pointer;
     font-size: 0.95rem;
     color: #555;
@@ -132,7 +148,10 @@ h1 {
 .hamburger-menu {
     display: none; /* PC에선 숨김 */
     position: absolute;
-    /* 위치는 media query에서 상세 조정 */
+    top: 5px; /* 타이틀과 높이 맞춤 */
+    right: 0;
+    width: 22px;  /* 사이즈 축소 */
+    height: 18px; /* 사이즈 축소 */
     cursor: pointer;
     flex-direction: column;
     justify-content: space-between;
@@ -141,22 +160,22 @@ h1 {
 
 .hamburger-menu span {
     display: block;
-    height: 3px;
+    height: 2px; /* 두께 살짝 얇게 */
     width: 100%;
     background-color: var(--primary-color);
-    border-radius: 3px;
-    /* 3. 모션 제거: transition 삭제 */
+    border-radius: 2px;
+    /* transition 제거 (모션 삭제 요청 반영) */
 }
 
-/* 햄버거 -> X 변환 (모션 없이 즉시 변경) */
+/* 햄버거 -> X 변환 (모션 없음) */
 .hamburger-menu.open span:nth-child(1) {
-    transform: translateY(9px) rotate(45deg); /* 위치값 조정 (높이 줄임에 따라) */
+    transform: translateY(8px) rotate(45deg); 
 }
 .hamburger-menu.open span:nth-child(2) {
     opacity: 0;
 }
 .hamburger-menu.open span:nth-child(3) {
-    transform: translateY(-9px) rotate(-45deg);
+    transform: translateY(-8px) rotate(-45deg);
 }
 
 /* 사이드바 */
@@ -164,14 +183,14 @@ h1 {
     position: fixed;
     top: 0;
     right: 0;
-    width: 280px;
+    width: 260px;
     height: 100%;
     background-color: white;
     box-shadow: -2px 0 10px rgba(0,0,0,0.1);
     z-index: 1500;
     transform: translateX(100%); 
     transition: transform 0.3s ease-in-out;
-    padding: 80px 30px 30px 30px; 
+    padding: 70px 25px 30px 25px; 
     overflow-y: auto;
 }
 
@@ -193,20 +212,22 @@ h1 {
 
 /* 사이드바 내부 아이템 스타일 */
 #sidebarContent .nav-group {
-    margin-bottom: 20px; /* 그룹 간격 축소 */
+    margin-bottom: 25px;
     width: 100%;
 }
 #sidebarContent .nav-header {
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid #eee; /* 사이드바 헤더 구분선은 유지 */
     padding-bottom: 5px;
     font-size: 1.1rem;
     margin-bottom: 8px;
+    color: var(--primary-color);
 }
 #sidebarContent .nav-item {
-    /* 4. 구분선 제거 및 자간 축소 */
+    /* 구분선 제거 및 자간 축소 */
     border-bottom: none; 
-    padding: 3px 0; /* 간격 좁힘 */
+    padding: 2px 0; 
     font-size: 0.95rem;
+    color: #444;
 }
 
 
@@ -220,7 +241,6 @@ h1 {
 .category-section { margin-bottom: 40px; }
 
 .category-title {
-    /* 카테고리 타이틀 폰트 변경 */
     font-family: 'Paperlogy', sans-serif;
     font-size: 1.2rem;
     margin-bottom: 15px;
@@ -372,45 +392,36 @@ h1 {
 
 /* 모바일 대응 미디어 쿼리 */
 @media (max-width: 600px) {
-    /* 2. 헤더 고정 및 타이틀/메뉴 일자 정렬 */
+    /* 헤더 고정 및 스타일 */
     header {
-        position: sticky; 
+        position: sticky; /* 상단 고정 */
         top: 0;
-        padding: 15px 20px; /* 패딩 축소 */
-        text-align: left; /* 타이틀 좌측 정렬 */
+        padding: 15px 20px;
+        text-align: left;
         height: auto;
     }
 
     h1 {
         margin: 0;
-        font-size: 1.3rem; /* 타이틀 크기 조정 */
+        font-size: 1.3rem; 
         line-height: 1;
         display: inline-block;
+        vertical-align: middle;
     }
     
     .header-btns {
-        /* 버튼들은 타이틀 아래로 자연스럽게 배치되도록 마진 조정 */
         margin-top: 15px; 
         margin-bottom: 0;
-        justify-content: flex-start; /* 버튼 좌측 정렬 */
+        justify-content: flex-start;
     }
 
     /* PC 메뉴 숨김 */
     #navMenuContainer { display: none; }
     
-    /* 5. 햄버거 메뉴 보이기 & 사이즈 축소 */
-    .hamburger-menu {
+    /* 햄버거 메뉴 보이기 */
+    .hamburger-menu { 
         display: flex;
-        top: 16px; /* 헤더 패딩(15px)과 시각적 정렬 */
-        right: 20px;
-        width: 24px;  /* 사이즈 줄임 (기존 30) */
-        height: 20px; /* 사이즈 줄임 (기존 25) */
-    }
-    .hamburger-menu.open span:nth-child(1) {
-        transform: translateY(9px) rotate(45deg); /* 높이 변경에 따른 조정 */
-    }
-    .hamburger-menu.open span:nth-child(3) {
-        transform: translateY(-9px) rotate(-45deg);
+        /* 위치는 relative parent인 .header-top-row 기준 top:5px */
     }
 
     /* 리스트 2열 */

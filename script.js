@@ -104,6 +104,11 @@ function renderNavMenu() {
     const colMusic = document.createElement('div');
     const colLive = document.createElement('div');
     const colBook = document.createElement('div');
+    
+    // PC 레이아웃용 클래스 추가
+    colMusic.className = 'nav-column';
+    colLive.className = 'nav-column';
+    colBook.className = 'nav-column';
 
     for (const [mainCat, subSet] of catMap) {
         const subCats = [...subSet];
@@ -281,6 +286,8 @@ function renderList(items) {
 }
 
 function renderAllList() {
+    // [버그 수정] 전체 보기 시 현재 표시 데이터도 전체로 리셋
+    currentDisplayData = productData;
     renderList(productData);
 }
 
@@ -291,6 +298,8 @@ function toggleCheck(id) {
         ownedItems.add(id);
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
+    
+    // 현재 보고 있는 리스트 유지
     renderList(currentDisplayData);
     updateProgress(); 
 }
