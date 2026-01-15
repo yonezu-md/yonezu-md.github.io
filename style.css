@@ -11,7 +11,6 @@ body {
     color: var(--text-color);
     margin: 0;
     padding: 0;
-    /* 하단 플로팅 바 공간 확보를 위해 여백 넉넉히 */
     padding-bottom: 120px; 
 }
 
@@ -30,7 +29,7 @@ h1 {
     color: var(--primary-color);
 }
 
-/* [추가] 상단 버튼 그룹 스타일 */
+/* 상단 버튼 그룹 스타일 */
 .header-btns {
     display: flex;
     justify-content: center;
@@ -66,23 +65,19 @@ h1 {
     color: #333;
 }
 
-/* [수정] 하단 플로팅 프로그레스 바 */
+/* 하단 플로팅 프로그레스 바 */
 .floating-progress {
     position: fixed;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%); /* 중앙 정렬 */
     width: 90%;
-    max-width: 400px; /* 너무 넓어지지 않게 제한 */
+    max-width: 400px;
     background-color: #FFFFFF;
-    border-radius: 20px; /* 둥근 직사각형 */
+    border-radius: 20px;
     padding: 15px 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    z-index: 900; /* 탑 버튼(999)보다는 아래, 콘텐츠보다는 위 */
-    
-    /* 모바일 탑 버튼 공간 고려: 
-       탑 버튼이 우측에 있으므로 중앙 정렬된 바와 겹치지 않게 max-width 조절됨 
-    */
+    z-index: 900; 
 }
 
 .progress-info {
@@ -244,7 +239,7 @@ h1 {
     font-weight: bold;
 }
 
-/* [수정] 플로팅 버튼 (탑 버튼만 남음) */
+/* 플로팅 버튼 (탑 버튼) */
 .floating-btns {
     position: fixed;
     bottom: 30px;
@@ -279,21 +274,39 @@ h1 {
 
 .status-msg { text-align: center; padding: 50px; color: #888; }
 
+/* 모바일 대응 스타일 */
 @media (max-width: 600px) {
     .items-grid { grid-template-columns: repeat(2, 1fr); }
     .filter-container { justify-content: flex-start; }
     
-    /* 모바일에서는 플로팅 버튼 위치 및 크기 조정 */
+    /* 탑 버튼 위치 및 크기 */
     .floating-btns {
         bottom: 25px;
-        right: 20px;
+        right: 15px; /* 약간 더 바깥쪽으로 */
     }
     .float-btn {
-        width: 50px;
-        height: 50px;
+        width: 40px;
+        height: 40px;
     }
     .float-btn img {
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
+    }
+
+    /* [수정] 모바일 플로팅 프로그레스 바 축소 */
+    .floating-progress {
+        width: 60%; /* 너비를 줄여 우측 버튼과 겹침 방지 */
+        padding: 10px 15px; /* 패딩 축소 */
+        bottom: 20px; /* 바닥에서 높이 */
+        border-radius: 15px;
+    }
+    
+    .progress-info {
+        font-size: 0.8rem; /* 폰트 사이즈 축소 */
+        margin-bottom: 5px;
+    }
+    
+    .progress-track {
+        height: 6px; /* 바 높이 축소 */
     }
 }
