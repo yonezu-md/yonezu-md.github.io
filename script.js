@@ -67,11 +67,10 @@ function parseCSV(csvText) {
 
 // --- 네비게이션 메뉴 및 사이드바 생성 ---
 function renderNavMenu() {
-    // 1. 컨테이너 초기화
     navMenuContainer.innerHTML = '';
     sidebarContent.innerHTML = '';
 
-    // 2. HOME 버튼 생성 (PC/모바일 공통 로직)
+    // HOME 버튼 (PC/모바일 공통)
     const createHomeGroup = () => {
         const homeGroup = document.createElement('div');
         homeGroup.className = 'nav-group';
@@ -85,56 +84,42 @@ function renderNavMenu() {
         homeBtn.style.textAlign = 'left';
         homeBtn.onclick = () => {
             resetFilter();
-            closeSidebar(); // 모바일에서 클릭 시 사이드바 닫기
+            closeSidebar(); 
         };
         homeGroup.appendChild(homeBtn);
         return homeGroup;
     };
 
-    // PC용 HOME
     navMenuContainer.appendChild(createHomeGroup());
-    // 모바일용 HOME
     sidebarContent.appendChild(createHomeGroup());
 
-    // 3. 카테고리 데이터 수집
     const catMap = new Map();
     productData.forEach(item => {
         const main = item.category;
         const sub = item.sub_category;
-        
-        if (!catMap.has(main)) {
-            catMap.set(main, new Set());
-        }
-        if (sub && sub.trim() !== '') {
-            catMap.get(main).add(sub);
-        }
+        if (!catMap.has(main)) catMap.set(main, new Set());
+        if (sub && sub.trim() !== '') catMap.get(main).add(sub);
     });
 
-    // 4. PC용 3단 컬럼 준비
     const colMusic = document.createElement('div');
     const colLive = document.createElement('div');
     const colBook = document.createElement('div');
 
-    // 5. 카테고리 순회하며 버튼 생성
     for (const [mainCat, subSet] of catMap) {
         const subCats = [...subSet];
         subCats.sort().reverse(); 
 
-        // PC용 그룹
+        // PC용
         const pcGroup = createCategoryGroup(mainCat, subCats, false);
-        
-        // PC 분류 배치
         if (TYPE_MUSIC.includes(mainCat)) colMusic.appendChild(pcGroup);
         else if (TYPE_BOOK.includes(mainCat)) colBook.appendChild(pcGroup);
         else colLive.appendChild(pcGroup);
 
-        // 모바일용 그룹 (분류 없이 순서대로, 혹은 별도 로직)
-        // 여기서는 스프레드시트 순서대로 사이드바에 쌓습니다.
+        // 모바일용
         const mobileGroup = createCategoryGroup(mainCat, subCats, true);
         sidebarContent.appendChild(mobileGroup);
     }
 
-    // 6. PC 메뉴 DOM 조립
     const pcWrapper = document.createElement('div');
     pcWrapper.className = 'nav-grid';
     pcWrapper.innerHTML = `
@@ -158,7 +143,6 @@ function renderNavMenu() {
     pcWrapper.querySelector('#wrapper-book').appendChild(colBook);
 }
 
-// 카테고리 그룹(메인+서브버튼들) 생성 헬퍼
 function createCategoryGroup(mainCat, subCats, isMobile) {
     const groupDiv = document.createElement('div');
     groupDiv.className = 'nav-group';
@@ -194,7 +178,6 @@ function createCategoryGroup(mainCat, subCats, isMobile) {
     return groupDiv;
 }
 
-// --- 사이드바 토글 기능 ---
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
@@ -202,7 +185,7 @@ function toggleSidebar() {
     
     sidebar.classList.toggle('open');
     overlay.classList.toggle('open');
-    hamburger.classList.toggle('open'); // 햄버거 아이콘 <-> X 아이콘 변환
+    hamburger.classList.toggle('open'); 
 }
 
 function closeSidebar() {
@@ -225,7 +208,6 @@ function resetFilter() {
     renderAllList(); 
 }
 
-// --- 데이터 필터링 ---
 function filterData(mainCat, subCat) {
     if (mainCat === null) {
         currentDisplayData = productData;
@@ -239,7 +221,6 @@ function filterData(mainCat, subCat) {
     renderList(currentDisplayData);
 }
 
-// --- 리스트 그리기 ---
 function renderList(items) {
     listContainer.innerHTML = '';
     
@@ -248,7 +229,6 @@ function renderList(items) {
         return;
     }
 
-    // 그룹화 로직
     const grouped = new Map();
     items.forEach(item => {
         const key = (item.sub_category && item.sub_category.trim() !== '') 
@@ -300,12 +280,10 @@ function renderList(items) {
     }
 }
 
-// --- 전체 리스트 그리기 (초기) ---
 function renderAllList() {
     renderList(productData);
 }
 
-// --- 체크 토글 ---
 function toggleCheck(id) {
     if (ownedItems.has(id)) {
         ownedItems.delete(id);
@@ -313,18 +291,14 @@ function toggleCheck(id) {
         ownedItems.add(id);
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
-    
-    // 현재 리스트 갱신
     renderList(currentDisplayData);
     updateProgress(); 
 }
 
-// --- 맨 위로 ---
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// --- 초기화 ---
 function resetRecords() {
     if (confirm("모든 체크 기록을 삭제하시겠습니까?")) {
         ownedItems.clear();
@@ -335,7 +309,6 @@ function resetRecords() {
     }
 }
 
-// --- 달성률 ---
 function updateProgress() {
     const totalCount = productData.length;
     if (totalCount === 0) return;
@@ -350,7 +323,6 @@ function updateProgress() {
     if(progressText) progressText.innerText = `${validOwnedCount}/${totalCount} (${percent}%)`;
 }
 
-// --- 이미지 생성 ---
 async function generateImage() {
     const btn = document.getElementById('headerSaveBtn');
     const originalText = btn.innerText;

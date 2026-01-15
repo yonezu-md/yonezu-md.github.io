@@ -1,3 +1,18 @@
+/* 1. 폰트 정의 */
+@font-face {
+    font-family: 'Pretendard';
+    src: url('/font/Pretendard-Medium.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Paperlogy';
+    src: url('/font/Paperlogy.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
 :root {
     --primary-color: #182558; 
     --bg-color: #f5f5f5;
@@ -6,7 +21,8 @@
 }
 
 body {
-    font-family: 'Noto Sans KR', sans-serif;
+    /* 기본 폰트 변경: Pretendard */
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
     margin: 0;
@@ -20,10 +36,14 @@ header {
     padding: 30px 20px;
     text-align: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    position: relative; 
+    position: relative;
+    /* 모바일 헤더 고정을 위한 기본 설정 */
+    z-index: 1010; 
 }
 
 h1 {
+    /* 타이틀 폰트 변경: Paperlogy */
+    font-family: 'Paperlogy', sans-serif;
     margin: 0 0 20px 0;
     font-size: 1.8rem;
     font-weight: 900;
@@ -39,13 +59,14 @@ h1 {
 }
 
 .header-btn {
+    /* 버튼 폰트 변경 */
+    font-family: 'Paperlogy', sans-serif;
     border: none;
     border-radius: 8px;
     padding: 10px 20px;
     font-size: 0.95rem;
     font-weight: bold;
     cursor: pointer;
-    font-family: 'Noto Sans KR', sans-serif;
     transition: all 0.2s;
 }
 
@@ -55,9 +76,7 @@ h1 {
 .header-btn.reset { background-color: #eee; color: #666; }
 .header-btn.reset:hover { background-color: #ddd; color: #333; }
 
-/* =========================================
-   [PC] 네비게이션 메뉴 스타일
-   ========================================= */
+/* PC 네비게이션 메뉴 */
 #navMenuContainer {
     display: flex;
     flex-wrap: wrap;       
@@ -75,6 +94,8 @@ h1 {
 }
 
 .nav-header {
+    /* 카테고리 헤더 폰트 변경 */
+    font-family: 'Paperlogy', sans-serif;
     font-size: 1.1rem;
     font-weight: 900;       
     color: #000;
@@ -90,7 +111,7 @@ h1 {
     cursor: pointer;
     font-size: 0.95rem;
     color: #555;
-    font-family: 'Noto Sans KR', sans-serif;
+    font-family: 'Pretendard', sans-serif;
     transition: all 0.2s;
     line-height: 1.4;
 }
@@ -106,19 +127,16 @@ h1 {
 }
 
 /* =========================================
-   [모바일] 사이드바 & 햄버거 버튼
+   [모바일] 사이드바 & 햄버거 버튼 스타일
    ========================================= */
 .hamburger-menu {
     display: none; /* PC에선 숨김 */
     position: absolute;
-    top: 25px;
-    right: 20px;
-    width: 30px;
-    height: 25px;
+    /* 위치는 media query에서 상세 조정 */
     cursor: pointer;
     flex-direction: column;
     justify-content: space-between;
-    z-index: 2000; /* 사이드바보다 위 */
+    z-index: 2000; 
 }
 
 .hamburger-menu span {
@@ -127,18 +145,18 @@ h1 {
     width: 100%;
     background-color: var(--primary-color);
     border-radius: 3px;
-    transition: all 0.3s ease;
+    /* 3. 모션 제거: transition 삭제 */
 }
 
-/* 햄버거 -> X 변환 애니메이션 */
+/* 햄버거 -> X 변환 (모션 없이 즉시 변경) */
 .hamburger-menu.open span:nth-child(1) {
-    transform: translateY(11px) rotate(45deg);
+    transform: translateY(9px) rotate(45deg); /* 위치값 조정 (높이 줄임에 따라) */
 }
 .hamburger-menu.open span:nth-child(2) {
     opacity: 0;
 }
 .hamburger-menu.open span:nth-child(3) {
-    transform: translateY(-11px) rotate(-45deg);
+    transform: translateY(-9px) rotate(-45deg);
 }
 
 /* 사이드바 */
@@ -151,17 +169,16 @@ h1 {
     background-color: white;
     box-shadow: -2px 0 10px rgba(0,0,0,0.1);
     z-index: 1500;
-    transform: translateX(100%); /* 기본적으로 숨김 */
+    transform: translateX(100%); 
     transition: transform 0.3s ease-in-out;
-    padding: 80px 30px 30px 30px; /* 상단 여백은 X버튼 고려 */
+    padding: 80px 30px 30px 30px; 
     overflow-y: auto;
 }
 
 .sidebar.open {
-    transform: translateX(0); /* 열림 */
+    transform: translateX(0); 
 }
 
-/* 사이드바 배경 오버레이 */
 .sidebar-overlay {
     position: fixed;
     top: 0;
@@ -172,24 +189,24 @@ h1 {
     z-index: 1400;
     display: none;
 }
-.sidebar-overlay.open {
-    display: block;
-}
+.sidebar-overlay.open { display: block; }
 
 /* 사이드바 내부 아이템 스타일 */
 #sidebarContent .nav-group {
-    margin-bottom: 30px;
+    margin-bottom: 20px; /* 그룹 간격 축소 */
     width: 100%;
 }
 #sidebarContent .nav-header {
-    border-bottom: 1px solid #eee;
+    border-bottom: 2px solid #eee;
     padding-bottom: 5px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
 }
 #sidebarContent .nav-item {
-    padding: 10px 0;
-    font-size: 1rem;
-    border-bottom: 1px solid #f9f9f9;
+    /* 4. 구분선 제거 및 자간 축소 */
+    border-bottom: none; 
+    padding: 3px 0; /* 간격 좁힘 */
+    font-size: 0.95rem;
 }
 
 
@@ -203,6 +220,8 @@ h1 {
 .category-section { margin-bottom: 40px; }
 
 .category-title {
+    /* 카테고리 타이틀 폰트 변경 */
+    font-family: 'Paperlogy', sans-serif;
     font-size: 1.2rem;
     margin-bottom: 15px;
     border-left: 5px solid var(--primary-color);
@@ -353,16 +372,51 @@ h1 {
 
 /* 모바일 대응 미디어 쿼리 */
 @media (max-width: 600px) {
+    /* 2. 헤더 고정 및 타이틀/메뉴 일자 정렬 */
+    header {
+        position: sticky; 
+        top: 0;
+        padding: 15px 20px; /* 패딩 축소 */
+        text-align: left; /* 타이틀 좌측 정렬 */
+        height: auto;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 1.3rem; /* 타이틀 크기 조정 */
+        line-height: 1;
+        display: inline-block;
+    }
+    
+    .header-btns {
+        /* 버튼들은 타이틀 아래로 자연스럽게 배치되도록 마진 조정 */
+        margin-top: 15px; 
+        margin-bottom: 0;
+        justify-content: flex-start; /* 버튼 좌측 정렬 */
+    }
+
     /* PC 메뉴 숨김 */
     #navMenuContainer { display: none; }
     
-    /* 햄버거 메뉴 보이기 */
-    .hamburger-menu { display: flex; }
+    /* 5. 햄버거 메뉴 보이기 & 사이즈 축소 */
+    .hamburger-menu {
+        display: flex;
+        top: 16px; /* 헤더 패딩(15px)과 시각적 정렬 */
+        right: 20px;
+        width: 24px;  /* 사이즈 줄임 (기존 30) */
+        height: 20px; /* 사이즈 줄임 (기존 25) */
+    }
+    .hamburger-menu.open span:nth-child(1) {
+        transform: translateY(9px) rotate(45deg); /* 높이 변경에 따른 조정 */
+    }
+    .hamburger-menu.open span:nth-child(3) {
+        transform: translateY(-9px) rotate(-45deg);
+    }
 
     /* 리스트 2열 */
     .items-grid { grid-template-columns: repeat(2, 1fr); }
     
-    /* 플로팅 버튼/바 위치 조정 */
+    /* 플로팅 요소 위치 조정 */
     .floating-btns { bottom: 25px; right: 15px; }
     .float-btn { width: 40px; height: 40px; }
     .float-btn img { width: 22px; height: 22px; }
