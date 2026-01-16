@@ -165,9 +165,16 @@ h1 {
     color: var(--primary-color); margin-bottom: 15px; font-weight: bold;
 }
 
+/* [수정] 회색 박스 제거 및 스크롤 제거 */
 .preview-img-box {
-    background-color: #f0f2f5; padding: 10px; border-radius: 8px; margin-bottom: 15px;
-    overflow: auto; max-height: 500px; display: flex; align-items: center; justify-content: center;
+    background-color: transparent; /* 회색(#f0f2f5) 제거 -> 투명 */
+    padding: 10px; 
+    border-radius: 8px; 
+    margin-bottom: 15px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    /* max-height, overflow 제거하여 이미지 전체 표시 */
 }
 .preview-img-box img { max-width: 100%; height: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: block; }
 
@@ -296,4 +303,14 @@ h1 {
     /* 모바일 컨트롤 조정 */
     .control-row { justify-content: center; }
     .preview-controls-wrapper input[type="text"] { width: 140px; }
+    
+    /* 모바일 가로 스크롤 허용 (줄바꿈 방지) */
+    .bottom-row {
+        justify-content: flex-start;
+        overflow-x: auto;
+        width: 100%;
+        padding-bottom: 5px;
+        scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .bottom-row::-webkit-scrollbar { display: none; }
 }

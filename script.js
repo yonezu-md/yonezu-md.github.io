@@ -44,7 +44,6 @@ function setupEventListeners() {
         if(optNameJpCheck.checked) optNameKoCheck.checked = false;
         updateCollectionPreview();
     });
-    // 가격 체크박스 리스너
     optPriceCheck.addEventListener('change', updateCollectionPreview);
 }
 
@@ -356,7 +355,7 @@ async function generateImage() {
     scrollToTop();
 }
 
-// [수정] 2줄 텍스트 처리, 일본어 대체, 가격 표시, 회색박스 제거
+// [수정] 텍스트 중앙 정렬 로직 강화
 async function drawCollectionCanvas(items) {
     const cvs = document.createElement('canvas');
     const ctx = cvs.getContext('2d');
@@ -370,19 +369,16 @@ async function drawCollectionCanvas(items) {
 
     const cardWidth = 200;
     const imgHeight = 200;
-    
-    // 텍스트 영역 높이 계산
-    let textHeight = 0;
     const nameLineHeight = 20;
     const priceLineHeight = 20;
-    const paddingY = 10; // 텍스트 위아래 여백
+    const paddingY = 10; 
 
-    // 대략적인 높이 산정 (최대 2줄 + 가격 1줄)
-    if (showText) textHeight += (nameLineHeight * 2); 
-    if (showPrice) textHeight += priceLineHeight;
-    if (showText || showPrice) textHeight += (paddingY * 2);
-
-    const cardHeight = imgHeight + textHeight;
+    // 카드 높이 (항상 2줄+가격 공간 확보하여 균일하게)
+    let textAreaHeight = 0;
+    if (showText || showPrice) {
+        textAreaHeight = (nameLineHeight * 2) + priceLineHeight + (paddingY * 2);
+    }
+    const cardHeight = imgHeight + textAreaHeight;
     const gap = 20; 
     const colCount = 5;
     const padding = 40; 
@@ -395,7 +391,8 @@ async function drawCollectionCanvas(items) {
     cvs.width = padding * 2 + contentWidth;
     cvs.height = padding * 2 + contentHeight + titleAreaHeight;
 
-    ctx.fillStyle = "#ffffff";
+    // [수정] 배경색 #fafafa 적용
+    ctx.fillStyle = "#fafafa"; 
     ctx.fillRect(0, 0, cvs.width, cvs.height);
 
     let startY = padding;
@@ -416,12 +413,10 @@ async function drawCollectionCanvas(items) {
         img.onerror = () => resolve(null);
     });
 
-    // 텍스트 줄바꿈 헬퍼
     const getLines = (text, maxWidth) => {
         const words = text.split('');
         const lines = [];
         let currentLine = words[0];
-
         for (let i = 1; i < words.length; i++) {
             const word = words[i];
             const width = ctx.measureText(currentLine + word).width;
@@ -445,12 +440,12 @@ async function drawCollectionCanvas(items) {
         const y = startY + r * (cardHeight + gap);
         const borderRadius = 15; 
 
-        // [수정] 배경을 흰색으로 변경하여 회색 박스 제거 효과
+        // 카드 배경 (흰색)
         ctx.save(); 
         ctx.shadowColor = "rgba(0, 0, 0, 0.1)"; 
         ctx.shadowBlur = 10; 
         ctx.shadowOffsetY = 4; 
-        ctx.fillStyle = "#ffffff"; // 흰색 배경
+        ctx.fillStyle = "#ffffff"; 
         ctx.beginPath();
         ctx.roundRect(x, y, cardWidth, cardHeight, borderRadius);
         ctx.fill();
@@ -476,49 +471,69 @@ async function drawCollectionCanvas(items) {
             ctx.restore(); 
         }
 
-        // 텍스트 그리기
-        let currentTextY = y + imgHeight + 20; // 텍스트 시작 위치
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "#333";
+        // [수정] 텍스트 수직 중앙 정렬 로직
+        if (showText || showPrice) {
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "#333";
 
-        // 1. 상품명
-        if (showText) {
-            ctx.font = "bold 15px 'Pretendard', sans-serif";
-            // [수정] 일본어 대체 로직 (nameJp 없으면 nameKo 사용)
-            let textToDraw = showNameJp 
-                             ? (item.nameJp && item.nameJp.trim() !== '' ? item.nameJp : item.nameKo) 
-                             : item.nameKo;
-            
-            // [수정] 2줄 제한 로직
-            const lines = getLines(textToDraw, cardWidth - 20);
-            const maxLines = 2;
-            
-            for (let j = 0; j < Math.min(lines.length, maxLines); j++) {
-                let lineText = lines[j];
-                // 마지막 줄인데 텍스트가 더 남았다면 ... 처리
-                if (j === maxLines - 1 && lines.length > maxLines) {
-                    lineText = lineText.slice(0, -1) + "...";
+            // 1. 출력할 텍스트 라인 준비
+            let lines = [];
+            if (showText) {
+                ctx.font = "bold 15px 'Pretendard', sans-serif";
+                let textToDraw = showNameJp 
+                                 ? (item.nameJp && item.nameJp.trim() !== '' ? item.nameJp : item.nameKo) 
+                                 : item.nameKo;
+                
+                let tempLines = getLines(textToDraw, cardWidth - 20);
+                // 최대 2줄 제한
+                if (tempLines.length > 2) {
+                    tempLines = tempLines.slice(0, 2);
+                    tempLines[1] = tempLines[1].slice(0, -1) + "...";
                 }
-                ctx.fillText(lineText, x + (cardWidth/2), currentTextY);
-                currentTextY += nameLineHeight;
+                lines = tempLines;
             }
-            // 텍스트가 1줄 뿐이면 공간 보정을 위해 Y값 추가 이동 (선택사항)
-            if (lines.length === 1) currentTextY += 5; 
-        }
 
-        // 2. 가격
-        if (showPrice) {
-            currentTextY += 5; // 상품명과 간격
-            ctx.font = "14px 'Pretendard', sans-serif";
-            ctx.fillStyle = "#182558"; // 강조색
-            ctx.fillText(item.price || '-', x + (cardWidth/2), currentTextY);
+            // 2. 실제 차지하는 텍스트 높이 계산
+            let contentHeight = 0;
+            if (showText) contentHeight += lines.length * nameLineHeight;
+            if (showPrice) contentHeight += priceLineHeight;
+            if (showText && showPrice) contentHeight += 5; // 사이 간격
+
+            // 3. 텍스트 영역의 중앙에서 시작 Y좌표 계산
+            // 텍스트 영역의 중앙 Y좌표
+            const textAreaCenterY = y + imgHeight + (textAreaHeight / 2);
+            // 그릴 컨텐츠의 시작 Y좌표 (중앙 기준 위로 절반만큼 이동)
+            let drawY = textAreaCenterY - (contentHeight / 2) + (nameLineHeight / 2); 
+            // * nameLineHeight/2 는 textBaseline="middle" 때문
+
+            // 4. 그리기
+            if (showText) {
+                ctx.font = "bold 15px 'Pretendard', sans-serif";
+                lines.forEach(line => {
+                    ctx.fillText(line, x + (cardWidth/2), drawY);
+                    drawY += nameLineHeight;
+                });
+            }
+
+            if (showPrice) {
+                if (showText) drawY += 5; // 간격
+                // 가격이 맨 처음이면 drawY 보정 (이미 위에서 계산됨)
+                if (!showText) {
+                     // 폰트 크기가 다르므로 약간의 미세 조정 필요할 수 있으나 기본 로직으로 충분
+                     // 가격만 있을 때 기준선 맞춤
+                     drawY = textAreaCenterY - (priceLineHeight / 2) + (priceLineHeight / 2); 
+                }
+                
+                ctx.font = "14px 'Pretendard', sans-serif";
+                ctx.fillStyle = "#182558"; 
+                ctx.fillText(item.price || '-', x + (cardWidth/2), drawY);
+            }
         }
     }
     return cvs.toDataURL('image/jpeg', 0.9);
 }
 
-// 수집률 카드 (동일)
 async function drawStatsCanvas() {
     const cvs = document.createElement('canvas');
     const ctx = cvs.getContext('2d');
@@ -547,7 +562,7 @@ async function drawStatsCanvas() {
     cvs.width = width;
     cvs.height = height;
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#fafafa";
     ctx.fillRect(0, 0, width, height);
     ctx.textBaseline = 'middle';
 
@@ -568,7 +583,7 @@ async function drawStatsCanvas() {
 
         const barY = currentY + 15;
         const barHeight = 12;
-        ctx.fillStyle = "#eeeeee";
+        ctx.fillStyle = "#e0e0e0"; 
         ctx.beginPath();
         ctx.roundRect(padding, barY, width - (padding * 2), barHeight, 6);
         ctx.fill();
@@ -583,7 +598,7 @@ async function drawStatsCanvas() {
         currentY += rowHeight; 
     }
 
-    ctx.strokeStyle = "#eeeeee";
+    ctx.strokeStyle = "#e0e0e0";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(padding, currentY);
