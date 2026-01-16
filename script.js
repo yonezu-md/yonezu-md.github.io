@@ -4,6 +4,17 @@ let productData = [];
 let currentDisplayData = []; 
 const STORAGE_KEY = 'kenshi_owned';
 
+// [NEW] 테마 설정 (배경 이미지, 텍스트/바 색상)
+// barBg는 프로그레스 바의 빈 공간 색상 (보통 텍스트 색상의 투명도 조절 버전)
+const THEMES = [
+    { name: 'Pale Blue', bg: 'img/theme1.jpg', color: '#182558', barBg: 'rgba(24, 37, 88, 0.2)' },
+    { name: 'Lemon',     bg: 'img/theme2.jpg', color: '#D4AF37', barBg: 'rgba(212, 175, 55, 0.2)' },
+    { name: 'Black',     bg: 'img/theme3.jpg', color: '#333333', barBg: 'rgba(51, 51, 51, 0.2)' },
+    { name: 'Cyan',      bg: 'img/theme4.jpg', color: '#4A90E2', barBg: 'rgba(74, 144, 226, 0.2)' },
+    { name: 'Red',       bg: 'img/theme5.jpg', color: '#E24A4A', barBg: 'rgba(226, 74, 74, 0.2)' }
+];
+let currentThemeIndex = 0;
+
 let ownedItems = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
 
 const listContainer = document.getElementById('listContainer');
@@ -45,6 +56,22 @@ function setupEventListeners() {
         updateCollectionPreview();
     });
     optPriceCheck.addEventListener('change', updateCollectionPreview);
+}
+
+// [NEW] 테마 변경 함수
+async function changeTheme(index) {
+    currentThemeIndex = index;
+    
+    // 버튼 활성화 스타일 변경
+    const btns = document.querySelectorAll('.theme-btn');
+    btns.forEach((btn, idx) => {
+        if(idx === index) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
+    // 수집률 카드 다시 그리기
+    const statsUrl = await drawStatsCanvas();
+    document.getElementById('imgStats').src = statsUrl;
 }
 
 async function updateCollectionPreview() {
@@ -348,14 +375,16 @@ async function generateImage() {
         return;
     }
     updateCollectionPreview();
+    
+    // 수집률 카드 그리기
     const statsUrl = await drawStatsCanvas();
     document.getElementById('imgStats').src = statsUrl;
+    
     listContainer.style.display = 'none';
     previewContainer.style.display = 'flex';
     scrollToTop();
 }
 
-// [수정] 텍스트 중앙 정렬 로직 강화
 async function drawCollectionCanvas(items) {
     const cvs = document.createElement('canvas');
     const ctx = cvs.getContext('2d');
@@ -369,16 +398,17 @@ async function drawCollectionCanvas(items) {
 
     const cardWidth = 200;
     const imgHeight = 200;
+    
+    let textHeight = 0;
     const nameLineHeight = 20;
     const priceLineHeight = 20;
-    const paddingY = 10; 
+    const paddingY = 10;
 
-    // 카드 높이 (항상 2줄+가격 공간 확보하여 균일하게)
-    let textAreaHeight = 0;
-    if (showText || showPrice) {
-        textAreaHeight = (nameLineHeight * 2) + priceLineHeight + (paddingY * 2);
-    }
-    const cardHeight = imgHeight + textAreaHeight;
+    if (showText) textHeight += (nameLineHeight * 2); 
+    if (showPrice) textHeight += priceLineHeight;
+    if (showText || showPrice) textHeight += (paddingY * 2);
+
+    const cardHeight = imgHeight + textHeight;
     const gap = 20; 
     const colCount = 5;
     const padding = 40; 
@@ -391,7 +421,6 @@ async function drawCollectionCanvas(items) {
     cvs.width = padding * 2 + contentWidth;
     cvs.height = padding * 2 + contentHeight + titleAreaHeight;
 
-    // [수정] 배경색 #fafafa 적용
     ctx.fillStyle = "#fafafa"; 
     ctx.fillRect(0, 0, cvs.width, cvs.height);
 
@@ -440,7 +469,6 @@ async function drawCollectionCanvas(items) {
         const y = startY + r * (cardHeight + gap);
         const borderRadius = 15; 
 
-        // 카드 배경 (흰색)
         ctx.save(); 
         ctx.shadowColor = "rgba(0, 0, 0, 0.1)"; 
         ctx.shadowBlur = 10; 
@@ -471,13 +499,11 @@ async function drawCollectionCanvas(items) {
             ctx.restore(); 
         }
 
-        // [수정] 텍스트 수직 중앙 정렬 로직
         if (showText || showPrice) {
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillStyle = "#333";
 
-            // 1. 출력할 텍스트 라인 준비
             let lines = [];
             if (showText) {
                 ctx.font = "bold 15px 'Pretendard', sans-serif";
@@ -486,7 +512,6 @@ async function drawCollectionCanvas(items) {
                                  : item.nameKo;
                 
                 let tempLines = getLines(textToDraw, cardWidth - 20);
-                // 최대 2줄 제한
                 if (tempLines.length > 2) {
                     tempLines = tempLines.slice(0, 2);
                     tempLines[1] = tempLines[1].slice(0, -1) + "...";
@@ -494,20 +519,14 @@ async function drawCollectionCanvas(items) {
                 lines = tempLines;
             }
 
-            // 2. 실제 차지하는 텍스트 높이 계산
             let contentHeight = 0;
             if (showText) contentHeight += lines.length * nameLineHeight;
             if (showPrice) contentHeight += priceLineHeight;
-            if (showText && showPrice) contentHeight += 5; // 사이 간격
+            if (showText && showPrice) contentHeight += 5; 
 
-            // 3. 텍스트 영역의 중앙에서 시작 Y좌표 계산
-            // 텍스트 영역의 중앙 Y좌표
-            const textAreaCenterY = y + imgHeight + (textAreaHeight / 2);
-            // 그릴 컨텐츠의 시작 Y좌표 (중앙 기준 위로 절반만큼 이동)
+            const textAreaCenterY = y + imgHeight + (textHeight / 2);
             let drawY = textAreaCenterY - (contentHeight / 2) + (nameLineHeight / 2); 
-            // * nameLineHeight/2 는 textBaseline="middle" 때문
 
-            // 4. 그리기
             if (showText) {
                 ctx.font = "bold 15px 'Pretendard', sans-serif";
                 lines.forEach(line => {
@@ -517,11 +536,8 @@ async function drawCollectionCanvas(items) {
             }
 
             if (showPrice) {
-                if (showText) drawY += 5; // 간격
-                // 가격이 맨 처음이면 drawY 보정 (이미 위에서 계산됨)
+                if (showText) drawY += 5; 
                 if (!showText) {
-                     // 폰트 크기가 다르므로 약간의 미세 조정 필요할 수 있으나 기본 로직으로 충분
-                     // 가격만 있을 때 기준선 맞춤
                      drawY = textAreaCenterY - (priceLineHeight / 2) + (priceLineHeight / 2); 
                 }
                 
@@ -534,6 +550,7 @@ async function drawCollectionCanvas(items) {
     return cvs.toDataURL('image/jpeg', 0.9);
 }
 
+// [수정] 테마 적용 및 사진 기반 디자인 재현
 async function drawStatsCanvas() {
     const cvs = document.createElement('canvas');
     const ctx = cvs.getContext('2d');
@@ -541,6 +558,7 @@ async function drawStatsCanvas() {
     let totalAll = 0;
     let ownedAll = 0;
 
+    // 데이터 집계
     productData.forEach(item => {
         const cat = item.category;
         if (!statsMap.has(cat)) statsMap.set(cat, { total: 0, owned: 0 });
@@ -553,66 +571,118 @@ async function drawStatsCanvas() {
         totalAll++;
     });
 
+    const theme = THEMES[currentThemeIndex];
     const width = 600;
-    const padding = 40;
-    const rowHeight = 80; 
-    const footerHeight = 100;
-    const height = padding + (statsMap.size * rowHeight) + footerHeight + padding;
+    const height = 900; // 카드 비율 (세로형)
 
     cvs.width = width;
     cvs.height = height;
 
-    ctx.fillStyle = "#fafafa";
-    ctx.fillRect(0, 0, width, height);
-    ctx.textBaseline = 'middle';
+    // 1. 배경 이미지 그리기
+    const loadImage = (src) => new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = src;
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null); // 이미지가 없으면 null 반환
+    });
 
-    let currentY = padding + 30; 
+    const bgImg = await loadImage(theme.bg);
+    
+    // 배경 클리핑 (둥근 모서리)
+    ctx.beginPath();
+    ctx.roundRect(0, 0, width, height, 30);
+    ctx.clip();
 
-    for (const [catName, stat] of statsMap) {
-        const percent = Math.round((stat.owned / stat.total) * 100);
-        ctx.font = "bold 24px 'Paperlogy', sans-serif";
-        ctx.fillStyle = "#000000";
-        ctx.textAlign = "left";
-        ctx.fillText(catName, padding, currentY);
+    if (bgImg) {
+        // 이미지가 있으면 꽉 채우기 (Cover)
+        const aspect = bgImg.width / bgImg.height;
+        const canvasAspect = width / height;
+        let drawW, drawH, drawX, drawY;
 
-        const statText = `${stat.owned}/${stat.total} (${percent}%)`;
-        ctx.font = "bold 20px 'Pretendard', sans-serif";
-        ctx.fillStyle = "#182558"; 
-        ctx.textAlign = "right";
-        ctx.fillText(statText, width - padding, currentY);
-
-        const barY = currentY + 15;
-        const barHeight = 12;
-        ctx.fillStyle = "#e0e0e0"; 
-        ctx.beginPath();
-        ctx.roundRect(padding, barY, width - (padding * 2), barHeight, 6);
-        ctx.fill();
-
-        if (percent > 0) {
-            const fillWidth = (width - (padding * 2)) * (percent / 100);
-            ctx.fillStyle = "#182558";
-            ctx.beginPath();
-            ctx.roundRect(padding, barY, fillWidth, barHeight, 6);
-            ctx.fill();
+        if (aspect > canvasAspect) { // 이미지가 더 납작함 -> 높이 맞춤
+            drawH = height;
+            drawW = height * aspect;
+            drawX = (width - drawW) / 2;
+            drawY = 0;
+        } else { // 이미지가 더 길쭉함 -> 너비 맞춤
+            drawW = width;
+            drawH = width / aspect;
+            drawX = 0;
+            drawY = (height - drawH) / 2;
         }
-        currentY += rowHeight; 
+        ctx.drawImage(bgImg, drawX, drawY, drawW, drawH);
+    } else {
+        // 이미지가 없으면 기본 테마색 배경
+        ctx.fillStyle = "#fafafa";
+        ctx.fillRect(0, 0, width, height);
     }
 
-    ctx.strokeStyle = "#e0e0e0";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(padding, currentY);
-    ctx.lineTo(width - padding, currentY);
-    ctx.stroke();
-
-    currentY += 50; 
-    const totalPercent = Math.round((ownedAll / totalAll) * 100);
-    const totalText = `TOTAL: ${ownedAll}/${totalAll} (${totalPercent}%)`;
-
-    ctx.font = "900 32px 'Paperlogy', sans-serif";
-    ctx.fillStyle = "#182558";
+    // 2. 텍스트 및 바 그리기
+    ctx.fillStyle = theme.color; // 테마 색상 적용
     ctx.textAlign = "center";
-    ctx.fillText(totalText, width / 2, currentY);
+
+    // 헤더 (상단 여백 100px)
+    let yPos = 100;
+    ctx.font = "bold 48px 'Paperlogy', sans-serif";
+    ctx.fillText("굿즈 수집 현황", width / 2, yPos);
+    
+    yPos += 40;
+    ctx.font = "24px 'Pretendard', sans-serif";
+    ctx.globalAlpha = 0.7; // 서브타이틀 약간 투명
+    ctx.fillText("yonezu-md.github.io", width / 2, yPos);
+    ctx.globalAlpha = 1.0; // 복구
+
+    // 카테고리 리스트 (중간 영역)
+    yPos += 100;
+    const padding = 60;
+    const barHeight = 24; // 두꺼운 바
+    
+    for (const [catName, stat] of statsMap) {
+        const percent = Math.round((stat.owned / stat.total) * 100);
+        
+        // 텍스트 라인 (좌: 카테고리, 우: 수치)
+        ctx.fillStyle = theme.color;
+        ctx.font = "bold 28px 'Paperlogy', sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(catName, padding, yPos);
+
+        const statText = `${stat.owned}/${stat.total} (${percent}%)`;
+        ctx.font = "bold 28px 'Pretendard', sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(statText, width - padding, yPos);
+
+        // 진행 바 (텍스트 아래)
+        yPos += 15; // 간격
+        
+        // 바 배경
+        ctx.fillStyle = theme.barBg || "rgba(0,0,0,0.1)"; 
+        ctx.beginPath();
+        ctx.roundRect(padding, yPos, width - (padding * 2), barHeight, barHeight/2);
+        ctx.fill();
+
+        // 바 채우기
+        if (percent > 0) {
+            const fillWidth = (width - (padding * 2)) * (percent / 100);
+            ctx.fillStyle = theme.color;
+            ctx.beginPath();
+            ctx.roundRect(padding, yPos, fillWidth, barHeight, barHeight/2);
+            ctx.fill();
+        }
+
+        yPos += 90; // 다음 카테고리 간격
+    }
+
+    // 푸터 (하단 Total)
+    // 위치를 하단 고정으로 계산하거나 마지막 항목 아래로 배치
+    yPos = height - 100; // 하단에서 100px 위
+    const totalPercent = Math.round((ownedAll / totalAll) * 100);
+    const totalText = `TOTAL ${ownedAll}/${totalAll} (${totalPercent}%)`;
+
+    ctx.fillStyle = theme.color;
+    ctx.font = "bold 36px 'Pretendard', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(totalText, width / 2, yPos);
 
     return cvs.toDataURL('image/png');
 }

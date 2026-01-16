@@ -165,49 +165,21 @@ h1 {
     color: var(--primary-color); margin-bottom: 15px; font-weight: bold;
 }
 
-/* [수정] 회색 박스 제거 및 스크롤 제거 */
 .preview-img-box {
-    background-color: transparent; /* 회색(#f0f2f5) 제거 -> 투명 */
-    padding: 10px; 
-    border-radius: 8px; 
-    margin-bottom: 15px;
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    /* max-height, overflow 제거하여 이미지 전체 표시 */
+    background-color: transparent; 
+    padding: 10px; border-radius: 8px; margin-bottom: 15px;
+    display: flex; align-items: center; justify-content: center;
 }
-.preview-img-box img { max-width: 100%; height: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: block; }
+.preview-img-box img { max-width: 100%; height: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.15); display: block; border-radius: 15px; }
 
-/* [NEW] 컨트롤 패널 2줄 스타일 */
-.preview-controls-wrapper {
+/* 컨트롤 패널 2줄 스타일 */
+.preview-controls-inline {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     margin-bottom: 15px;
     width: 100%;
     align-items: center;
-}
-
-.control-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-}
-
-/* 둘째줄 줄바꿈 금지 설정 */
-.bottom-row {
-    flex-wrap: nowrap;
-    white-space: nowrap;
-    overflow-x: auto; /* 화면 너무 작으면 스크롤 */
-}
-
-.control-label-text {
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #333;
-    margin-right: 5px;
 }
 
 .control-item {
@@ -218,23 +190,59 @@ h1 {
     display: flex;
     align-items: center;
     gap: 4px;
-    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+    white-space: nowrap; 
 }
 
-.preview-controls-wrapper input[type="text"] {
+.preview-controls-inline input[type="text"] {
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 6px 10px;
     font-size: 0.9rem;
     font-family: 'Pretendard', sans-serif;
-    width: 150px;
+    width: 160px;
     text-align: left;
     outline: none;
     background: #fff;
     transition: border-color 0.2s;
 }
-.preview-controls-wrapper input[type="text"]:focus {
+.preview-controls-inline input[type="text"]:focus {
     border-color: var(--primary-color);
+}
+
+.control-divider { color: #ccc; font-size: 0.8rem; margin: 0 2px; }
+
+/* [NEW] 테마 선택 스타일 */
+.theme-selector {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.theme-label {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #555;
+}
+.theme-btn-group {
+    display: flex;
+    gap: 8px;
+}
+.theme-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.theme-btn:hover {
+    transform: scale(1.1);
+}
+.theme-btn.active {
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+    transform: scale(1.1);
 }
 
 .preview-footer { width: 100%; text-align: center; margin-top: 20px; }
@@ -300,17 +308,6 @@ h1 {
     .float-btn img { width: 22px; height: 22px; }
     .floating-progress { width: 60%; padding: 10px 15px; bottom: 20px; }
     
-    /* 모바일 컨트롤 조정 */
-    .control-row { justify-content: center; }
-    .preview-controls-wrapper input[type="text"] { width: 140px; }
-    
-    /* 모바일 가로 스크롤 허용 (줄바꿈 방지) */
-    .bottom-row {
-        justify-content: flex-start;
-        overflow-x: auto;
-        width: 100%;
-        padding-bottom: 5px;
-        scrollbar-width: none; -ms-overflow-style: none;
-    }
-    .bottom-row::-webkit-scrollbar { display: none; }
+    .preview-controls-inline { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .preview-controls-inline input[type="text"] { width: 140px; }
 }
