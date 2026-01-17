@@ -34,49 +34,36 @@
         <div id="previewContainer" style="display: none;">
             
             <div class="preview-card">
-                <div class="preview-label">1. 체크 리스트</div>
-                <div class="preview-img-box">
-                    <img id="imgCollection" src="" alt="Collection Preview">
+                <div class="preview-header-row">
+                    <div class="preview-label">수집 리스트 이미지</div>
+                    <button class="action-btn download small-btn" onclick="downloadImage()">저장</button>
                 </div>
 
-                <div class="preview-controls-inline">
-                    <label class="control-item">
-                        <input type="checkbox" id="optTitleCheck"> 타이틀
-                    </label>
-                    <input type="text" id="optTitleInput" placeholder="타이틀 입력">
-                    <span class="control-divider">|</span>
-                    <label class="control-item">
-                        <input type="checkbox" id="optNameKoCheck" checked> 상품명
-                    </label>
-                    <label class="control-item">
-                        <input type="checkbox" id="optNameJpCheck"> 商品名
-                    </label>
-                    <label class="control-item">
-                        <input type="checkbox" id="optPriceCheck"> 가격
-                    </label>
-                </div>
-
-                <button class="action-btn download" onclick="downloadImage('collection')">리스트 이미지 저장</button>
-            </div>
-
-            <div class="preview-card">
-                <div class="preview-label">2. 수집률 카드</div>
-                <div class="preview-img-box">
-                    <img id="imgStats" src="" alt="Stats Preview">
-                </div>
-                
-                <div class="theme-selector">
-                    <div class="theme-label">THEME</div>
-                    <div class="theme-btn-group">
-                        <button class="theme-btn active" onclick="changeTheme(0)" style="background-color: #182558;"></button>
-                        <button class="theme-btn" onclick="changeTheme(1)" style="background-color: #D4AF37;"></button>
-                        <button class="theme-btn" onclick="changeTheme(2)" style="background-color: #333333;"></button>
-                        <button class="theme-btn" onclick="changeTheme(3)" style="background-color: #4A90E2;"></button>
-                        <button class="theme-btn" onclick="changeTheme(4)" style="background-color: #E24A4A;"></button>
+                <div class="preview-controls-wrapper">
+                    <div class="control-row top-row">
+                        <label class="control-item">
+                            <input type="checkbox" id="optTitleCheck"> 타이틀
+                        </label>
+                        <input type="text" id="optTitleInput" value="굿즈 수집 리스트">
+                    </div>
+                    
+                    <div class="control-row bottom-row">
+                        <span class="control-label-text">상품명</span>
+                        <label class="control-item">
+                            <input type="checkbox" id="optNameKoCheck" checked> 한글
+                        </label>
+                        <label class="control-item">
+                            <input type="checkbox" id="optNameJpCheck"> 日本語
+                        </label>
+                        <label class="control-item">
+                            <input type="checkbox" id="optPriceCheck"> 가격
+                        </label>
                     </div>
                 </div>
 
-                <button class="action-btn download" onclick="downloadImage('stats')">수집률 카드 저장</button>
+                <div class="preview-img-box">
+                    <img id="imgCollection" src="" alt="Collection Preview">
+                </div>
             </div>
 
             <div class="preview-footer">

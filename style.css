@@ -160,9 +160,23 @@ h1 {
     text-align: center; display: flex; flex-direction: column;
 }
 
+/* [수정] 헤더 영역: 가운데 정렬 + 요소 간격 좁힘 */
+.preview-header-row {
+    display: flex;
+    justify-content: center; /* 전체를 가운데 정렬 */
+    align-items: center;     /* 수직 중앙 정렬 */
+    gap: 15px;               /* 타이틀과 버튼 사이 간격 (딱 붙게 하려면 이 숫자를 줄이세요) */
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f0f2f5;
+    padding-bottom: 15px;
+}
+
 .preview-label {
-    font-family: 'Paperlogy', sans-serif; font-size: 1.1rem;
-    color: var(--primary-color); margin-bottom: 15px; font-weight: bold;
+    font-family: 'Paperlogy', sans-serif; 
+    font-size: 1.2rem;
+    color: var(--primary-color); 
+    font-weight: bold; 
+    margin: 0; /* 불필요한 여백 제거 */
 }
 
 .preview-img-box {
@@ -170,16 +184,37 @@ h1 {
     padding: 10px; border-radius: 8px; margin-bottom: 15px;
     display: flex; align-items: center; justify-content: center;
 }
-.preview-img-box img { max-width: 100%; height: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.15); display: block; border-radius: 15px; }
+.preview-img-box img { max-width: 100%; height: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: block; }
 
 /* 컨트롤 패널 2줄 스타일 */
-.preview-controls-inline {
+.preview-controls-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 15px;
     width: 100%;
     align-items: center;
+}
+
+.control-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.bottom-row {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow-x: auto; 
+}
+
+.control-label-text {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #333;
+    margin-right: 5px;
 }
 
 .control-item {
@@ -193,7 +228,7 @@ h1 {
     white-space: nowrap; 
 }
 
-.preview-controls-inline input[type="text"] {
+.preview-controls-wrapper input[type="text"] {
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 6px 10px;
@@ -205,44 +240,8 @@ h1 {
     background: #fff;
     transition: border-color 0.2s;
 }
-.preview-controls-inline input[type="text"]:focus {
+.preview-controls-wrapper input[type="text"]:focus {
     border-color: var(--primary-color);
-}
-
-.control-divider { color: #ccc; font-size: 0.8rem; margin: 0 2px; }
-
-/* [NEW] 테마 선택 스타일 */
-.theme-selector {
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-.theme-label {
-    font-weight: bold;
-    font-size: 0.9rem;
-    color: #555;
-}
-.theme-btn-group {
-    display: flex;
-    gap: 8px;
-}
-.theme-btn {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.theme-btn:hover {
-    transform: scale(1.1);
-}
-.theme-btn.active {
-    border-color: #333;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
-    transform: scale(1.1);
 }
 
 .preview-footer { width: 100%; text-align: center; margin-top: 20px; }
@@ -256,6 +255,14 @@ h1 {
 .action-btn.cancel:hover { background-color: #ddd; }
 .action-btn.download { background-color: var(--primary-color); color: white; }
 .action-btn.download:hover { background-color: #2a3b75; }
+
+/* [NEW] 작은 버튼 스타일 */
+.action-btn.small-btn {
+    width: auto;
+    padding: 6px 15px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+}
 
 /* 아이템 그리드 */
 .category-section { margin-bottom: 40px; }
@@ -308,6 +315,15 @@ h1 {
     .float-btn img { width: 22px; height: 22px; }
     .floating-progress { width: 60%; padding: 10px 15px; bottom: 20px; }
     
-    .preview-controls-inline { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-    .preview-controls-inline input[type="text"] { width: 140px; }
+    .control-row { justify-content: center; }
+    .preview-controls-wrapper input[type="text"] { width: 140px; }
+    
+    .bottom-row {
+        justify-content: flex-start;
+        overflow-x: auto;
+        width: 100%;
+        padding-bottom: 5px;
+        scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .bottom-row::-webkit-scrollbar { display: none; }
 }
