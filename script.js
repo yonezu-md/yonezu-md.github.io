@@ -111,7 +111,7 @@ function showPreview(collectionUrl) {
     listContainer.style.display = 'none';
     previewContainer.style.display = 'flex'; 
     document.getElementById('imgCollection').src = collectionUrl;
-    scrollToTop();
+    scrollToTop(); // 미리보기 때는 부드럽게 올라가도 무관 (원하시면 제거 가능)
 }
 
 // --- 네비게이션 ---
@@ -177,12 +177,18 @@ function createCategoryGroup(mainCat, subCats, isMobile) {
     const header = document.createElement('button');
     header.className = 'nav-header';
     header.innerText = mainCat;
+    
     header.onclick = (e) => {
         handleMenuClick(e.target); 
         filterData(mainCat, null); 
+        
+        // [수정] 카테고리 이동 시 즉시 맨 위로 (애니메이션 없음)
+        window.scrollTo(0, 0);
+        
         if(isMobile) closeSidebar();
         closePreview();
     };
+    
     groupDiv.appendChild(header);
 
     if (subCats.length > 0) {
@@ -193,6 +199,10 @@ function createCategoryGroup(mainCat, subCats, isMobile) {
             btn.onclick = (e) => {
                 handleMenuClick(e.target);
                 filterData(mainCat, sub);
+                
+                // [수정] 카테고리 이동 시 즉시 맨 위로 (애니메이션 없음)
+                window.scrollTo(0, 0);
+                
                 if(isMobile) closeSidebar();
                 closePreview();
             };
@@ -202,22 +212,35 @@ function createCategoryGroup(mainCat, subCats, isMobile) {
     return groupDiv;
 }
 
+// [수정] 사이드바 열 때 본문 스크롤 잠금
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     const hamburger = document.querySelector('.hamburger-menu');
+    
     sidebar.classList.toggle('open');
     overlay.classList.toggle('open');
     hamburger.classList.toggle('open'); 
+    
+    // 열려있으면 스크롤 막음, 닫히면 품
+    if (sidebar.classList.contains('open')) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
 }
 
+// [수정] 사이드바 닫을 때 본문 스크롤 해제
 function closeSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     const hamburger = document.querySelector('.hamburger-menu');
+    
     sidebar.classList.remove('open');
     overlay.classList.remove('open');
     hamburger.classList.remove('open');
+    
+    document.body.style.overflow = ''; // 스크롤 복구
 }
 
 function handleMenuClick(target) {
@@ -346,7 +369,7 @@ async function generateImage() {
         return;
     }
     updateCollectionPreview();
-    // [수정] 수집률 카드 관련 호출 제거
+    
     listContainer.style.display = 'none';
     previewContainer.style.display = 'flex';
     scrollToTop();
