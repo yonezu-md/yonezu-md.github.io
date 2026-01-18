@@ -1,655 +1,359 @@
-// --- 설정 및 데이터 ---
-const SHEET_ID = '1-3ux609KgZ7vwEYHPsfTeopwyAcex-q1uiXiIYO57a8';
-let productData = [];
-let currentDisplayData = []; 
-const STORAGE_KEY = 'kenshi_owned';
+/* ... 기존 코드 (헤더, 네비게이션 등) ... */
+/* 위쪽은 기존과 동일하므로 변경된 부분(아이템 카드 쪽)만 추가해도 되지만 */
+/* 편의를 위해 전체 코드를 드립니다. */
 
-// 메탈 피규어 색상 정의
-const METAL_COLORS = [
-    { code: 'red',    hex: '#FF0000', label: '빨강' },
-    { code: 'green',  hex: '#008000', label: '초록' },
-    { code: 'blue',   hex: '#0000FF', label: '파랑' },
-    { code: 'purple', hex: '#800080', label: '보라' },
-    { code: 'gun',    hex: '#545D63', label: '건메탈' },
-    { code: 'gold',   hex: '#FFD700', label: '금' },
-    { code: 'silver', hex: '#C0C0C0', label: '은' },
-    { code: 'bronze', hex: '#CD7F32', label: '동' }
-];
-
-let ownedItems = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
-
-const listContainer = document.getElementById('listContainer');
-const navMenuContainer = document.getElementById('navMenuContainer');
-const sidebarContent = document.getElementById('sidebarContent');
-const previewContainer = document.getElementById('previewContainer');
-
-// [옵션 엘리먼트]
-const optTitleCheck = document.getElementById('optTitleCheck');
-const optTitleInput = document.getElementById('optTitleInput');
-const optNameKoCheck = document.getElementById('optNameKoCheck');
-const optNameJpCheck = document.getElementById('optNameJpCheck');
-const optPriceCheck = document.getElementById('optPriceCheck');
-
-// --- 초기화 ---
-async function init() {
-    setupEventListeners();
-    await fetchData();
-    if(productData.length > 0) {
-        renderNavMenu();
-        renderAllList(); 
-        updateProgress();
-    }
+/* 1. 폰트 정의 */
+@font-face {
+    font-family: 'Pretendard';
+    src: url('/font/Pretendard-Medium.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
 }
 
-function setupEventListeners() {
-    optTitleInput.addEventListener('input', () => {
-        if(optTitleInput.value.trim().length > 0) optTitleCheck.checked = true;
-        updateCollectionPreview();
-    });
-    optTitleCheck.addEventListener('change', updateCollectionPreview);
+@font-face {
+    font-family: 'Paperlogy';
+    src: url('/font/Paperlogy.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+:root {
+    --primary-color: #182558; 
+    --bg-color: #fafafa;
+    --card-bg: #ffffff;
+    --text-color: #333;
+}
+
+body {
+    font-family: 'Pretendard', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    padding-bottom: 120px; 
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 상단 헤더 */
+header {
+    background-color: var(--card-bg);
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 1010; 
+}
+
+.header-top-row {
+    position: relative;
+    margin-bottom: 40px; 
+}
+
+h1 {
+    font-family: 'Paperlogy', sans-serif;
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--primary-color);
+    letter-spacing: -0.5px;
+    cursor: pointer; 
+}
+
+/* PC 네비게이션 */
+#navMenuContainer {
+    display: flex;
+    flex-wrap: wrap;       
+    justify-content: center; 
+    gap: 50px;             
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: left;
+    align-items: flex-start; 
+}
+
+.nav-group {
+    display: flex;
+    flex-direction: column; 
+    min-width: 100px;       
+}
+
+.nav-header {
+    font-family: 'Paperlogy', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;       
+    color: #000;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    border-bottom: none; 
+    padding-bottom: 5px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    padding: 0;
+}
+.nav-header:hover { color: var(--primary-color); }
+
+.nav-item {
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 4px 0;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #555;
+    font-family: 'Pretendard', sans-serif;
+    transition: all 0.2s;
+    line-height: 1.5;
+}
+.nav-item:hover { color: var(--primary-color); font-weight: bold; }
+.nav-item.active { color: var(--primary-color); font-weight: bold; }
+
+.nav-action { color: #888; font-size: 0.9rem; margin-top: 5px; }
+.nav-action:hover { color: #d9534f; font-weight: bold; }
+
+/* 모바일 햄버거 & 사이드바 */
+.hamburger-menu {
+    display: none; 
+    position: fixed; 
+    top: 16px; 
+    right: 20px;
+    width: 22px;  
+    height: 18px; 
+    cursor: pointer;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 2000; 
+}
+.hamburger-menu span {
+    display: block; height: 2px; width: 100%;
+    background-color: var(--primary-color); border-radius: 2px;
+}
+.hamburger-menu.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.hamburger-menu.open span:nth-child(2) { opacity: 0; }
+.hamburger-menu.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+.sidebar {
+    position: fixed; top: 0; right: 0; width: 260px; height: 100%;
+    background-color: white; box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    z-index: 1500; transform: translateX(100%); transition: transform 0.3s ease-in-out;
+    padding: 70px 25px 30px 25px; overflow-y: auto;
+    -webkit-overflow-scrolling: touch; 
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5); z-index: 1400; display: none;
+}
+.sidebar-overlay.open { display: block; }
+
+#sidebarContent .nav-group { margin-bottom: 25px; width: 100%; }
+#sidebarContent .nav-header { border-bottom: 2px solid #eee; padding-bottom: 5px; font-size: 1.1rem; margin-bottom: 8px; color: var(--primary-color); }
+#sidebarContent .nav-item { border-bottom: none; padding: 2px 0; font-size: 0.95rem; color: #444; }
+
+#listContainer { max-width: 1200px; margin: 0 auto; padding: 20px; margin-top: 50px; }
+
+/* 미리보기 컨테이너 */
+#previewContainer {
+    max-width: 1000px; margin: 0 auto; padding: 20px; margin-top: 30px;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 30px;
+}
+
+.preview-card {
+    flex: 1; min-width: 300px; background: #fff; padding: 20px;
+    border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    text-align: center; display: flex; flex-direction: column;
+}
+
+.preview-header-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px; 
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f0f2f5;
+    padding-bottom: 15px;
+}
+
+.preview-label {
+    font-family: 'Paperlogy', sans-serif; font-size: 1.2rem;
+    color: var(--primary-color); font-weight: bold; margin: 0;
+}
+
+.preview-img-box {
+    background-color: transparent; 
+    padding: 10px; border-radius: 8px; margin-bottom: 15px;
+    display: flex; align-items: center; justify-content: center;
+}
+.preview-img-box img { max-width: 100%; height: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: block; }
+
+/* 컨트롤 패널 2줄 스타일 */
+.preview-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+    width: 100%;
+    align-items: center;
+}
+
+.control-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.bottom-row {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow-x: auto; 
+}
+
+.control-label-text {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #333;
+    margin-right: 5px;
+}
+
+.control-item {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap; 
+}
+
+.preview-controls-wrapper input[type="text"] {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    font-family: 'Pretendard', sans-serif;
+    width: 160px;
+    text-align: left;
+    outline: none;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+.preview-controls-wrapper input[type="text"]:focus {
+    border-color: var(--primary-color);
+}
+
+.preview-footer { width: 100%; text-align: center; margin-top: 20px; }
+
+.action-btn {
+    padding: 10px 20px; border-radius: 8px; font-size: 0.95rem;
+    font-weight: bold; cursor: pointer; border: none; transition: all 0.2s;
+    font-family: 'Paperlogy', sans-serif; width: 100%;
+}
+.action-btn.cancel { background-color: #eee; color: #555; width: auto; padding: 10px 40px; }
+.action-btn.cancel:hover { background-color: #ddd; }
+.action-btn.download { background-color: var(--primary-color); color: white; }
+.action-btn.download:hover { background-color: #2a3b75; }
+
+.action-btn.small-btn {
+    width: auto;
+    padding: 6px 15px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+}
+
+/* 아이템 그리드 */
+.category-section { margin-bottom: 40px; }
+.category-title { font-family: 'Paperlogy', sans-serif; font-size: 1.2rem; margin-bottom: 15px; border-left: 5px solid var(--primary-color); padding-left: 10px; color: #444; }
+.items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+
+.item-card { background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s; border: 2px solid transparent; position: relative; }
+.item-card:hover { transform: translateY(-3px); }
+.item-card.checked { border-color: var(--primary-color); }
+
+.item-img-wrapper { width: 100%; padding-top: 100%; position: relative; background-color: #eee; }
+.item-img-wrapper img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+
+.check-overlay { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.item-card.checked .check-overlay { display: flex; background-color: var(--primary-color); }
+.item-card.checked .check-overlay::after {
+    content: ''; width: 14px; height: 14px; 
+    background-image: url('img/check.png'); background-size: contain; background-repeat: no-repeat; background-position: center;
+}
+
+/* [NEW] 메탈 피규어 컬러 버튼 스타일 */
+.metal-colors {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    width: 80px; /* 4개씩 2줄 정도 나오게 */
+    justify-content: flex-end;
+    z-index: 20;
+}
+
+.metal-color-btn {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1);
+    cursor: pointer;
+    opacity: 0.3; /* 기본: 비활성 */
+    transition: all 0.2s;
+}
+
+.metal-color-btn.active {
+    opacity: 1.0; /* 활성: 선명하게 */
+    border-color: white;
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    transform: scale(1.1);
+}
+
+.item-info { padding: 10px; }
+.item-name { font-size: 0.95rem; font-weight: bold; margin-bottom: 4px; word-break: keep-all; }
+.item-subname { font-size: 0.8rem; color: #888; margin-bottom: 5px; }
+.item-price { font-size: 0.85rem; color: var(--primary-color); font-weight: bold; }
+
+.floating-btns { position: fixed; bottom: 30px; right: 30px; z-index: 999; display: flex; flex-direction: column; }
+.float-btn { width: 60px; height: 60px; border-radius: 50%; background-color: #FFFFFF; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; padding: 0; }
+.float-btn img { width: 30px; height: 30px; object-fit: contain; }
+.float-btn:hover { transform: scale(1.1); }
+
+.floating-progress { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background-color: #FFFFFF; border-radius: 20px; padding: 15px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 900; }
+.progress-info { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #666; font-weight: bold; }
+.progress-text { color: var(--primary-color); }
+.progress-track { width: 100%; height: 8px; background-color: #eee; border-radius: 4px; overflow: hidden; }
+.progress-bar { height: 100%; background-color: var(--primary-color); width: 0%; transition: width 0.3s ease; }
+.status-msg { text-align: center; padding: 50px; color: #888; }
+
+@media (max-width: 600px) {
+    header { position: sticky; top: 0; padding: 15px 20px; text-align: left; height: auto; }
+    .header-top-row { margin-bottom: 0; }
+    #listContainer { margin-top: 20px; }
+    #previewContainer { flex-direction: column; }
     
-    optNameKoCheck.addEventListener('change', () => {
-        if(optNameKoCheck.checked) optNameJpCheck.checked = false;
-        updateCollectionPreview();
-    });
-    optNameJpCheck.addEventListener('change', () => {
-        if(optNameJpCheck.checked) optNameKoCheck.checked = false;
-        updateCollectionPreview();
-    });
-    optPriceCheck.addEventListener('change', updateCollectionPreview);
-}
-
-async function updateCollectionPreview() {
-    const checkedItems = productData.filter(item => {
-        if (isMetalFigure(item.id)) {
-            return METAL_COLORS.some(c => ownedItems.has(`${item.id}_${c.code}`));
-        } else {
-            return ownedItems.has(item.id);
-        }
-    });
-
-    if (checkedItems.length === 0) return;
-    const collectionUrl = await drawCollectionCanvas(checkedItems);
-    document.getElementById('imgCollection').src = collectionUrl;
-}
-
-// --- 데이터 가져오기 ---
-async function fetchData() {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("네트워크 오류");
-        const text = await response.text();
-        productData = parseCSV(text);
-        console.log(`Loaded ${productData.length} items.`);
-    } catch (error) {
-        console.error(error);
-        listContainer.innerHTML = '<div class="status-msg">데이터를 불러오지 못했습니다.</div>';
-    }
-}
-
-function parseCSV(csvText) {
-    const rows = csvText.split('\n').map(row => {
-        const regex = /(?:^|,)(\"(?:[^\"]+|\"\")*\"|[^,]*)/g;
-        let columns = [];
-        let match;
-        while (match = regex.exec(row)) {
-            let col = match[1].replace(/^"|"$/g, '').replace(/""/g, '"');
-            columns.push(col.trim());
-        }
-        return columns;
-    });
-
-    const headers = rows[0]; 
-    const data = [];
-    for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        if (row.length < headers.length) continue;
-        const item = {};
-        headers.forEach((h, idx) => item[h] = row[idx]);
-        if(item.id) data.push(item);
-    }
-    return data;
-}
-
-// --- 메탈 피규어 판별 ---
-function isMetalFigure(id) {
-    return id.startsWith('fog_metal_');
-}
-
-// --- 화면 전환 ---
-function goHome() {
-    resetFilter();
-    closeSidebar();
-    closePreview();
-    scrollToTop();
-}
-
-function closePreview() {
-    listContainer.style.display = 'block';
-    previewContainer.style.display = 'none';
-    document.getElementById('imgCollection').src = "";
-}
-
-function showPreview(collectionUrl) {
-    listContainer.style.display = 'none';
-    previewContainer.style.display = 'flex'; 
-    document.getElementById('imgCollection').src = collectionUrl;
-    scrollToTop();
-}
-
-// --- 네비게이션 ---
-function renderNavMenu() {
-    navMenuContainer.innerHTML = '';
-    sidebarContent.innerHTML = '';
-
-    const createHomeGroup = () => {
-        const homeGroup = document.createElement('div');
-        homeGroup.className = 'nav-group';
-        
-        const homeBtn = document.createElement('button');
-        homeBtn.className = 'nav-header'; 
-        homeBtn.innerText = 'HOME';
-        homeBtn.onclick = goHome;
-        homeGroup.appendChild(homeBtn);
-
-        const saveBtn = document.createElement('button');
-        saveBtn.className = 'nav-item nav-action'; 
-        saveBtn.innerText = '이미지 저장';
-        saveBtn.onclick = () => {
-            generateImage();
-            closeSidebar(); 
-        };
-        homeGroup.appendChild(saveBtn);
-
-        const resetBtn = document.createElement('button');
-        resetBtn.className = 'nav-item nav-action';
-        resetBtn.innerText = '기록 초기화';
-        resetBtn.onclick = () => {
-            resetRecords();
-            closeSidebar();
-        };
-        homeGroup.appendChild(resetBtn);
-
-        return homeGroup;
-    };
-
-    navMenuContainer.appendChild(createHomeGroup());
-    sidebarContent.appendChild(createHomeGroup());
-
-    const catMap = new Map();
-    productData.forEach(item => {
-        const main = item.category;
-        const sub = item.sub_category;
-        if (!catMap.has(main)) catMap.set(main, new Set());
-        if (sub && sub.trim() !== '') catMap.get(main).add(sub);
-    });
-
-    for (const [mainCat, subSet] of catMap) {
-        const subCats = [...subSet];
-        const pcGroup = createCategoryGroup(mainCat, subCats, false);
-        navMenuContainer.appendChild(pcGroup);
-        const mobileGroup = createCategoryGroup(mainCat, subCats, true);
-        sidebarContent.appendChild(mobileGroup);
-    }
-}
-
-function createCategoryGroup(mainCat, subCats, isMobile) {
-    const groupDiv = document.createElement('div');
-    groupDiv.className = 'nav-group';
-
-    const header = document.createElement('button');
-    header.className = 'nav-header';
-    header.innerText = mainCat;
-    header.onclick = (e) => {
-        handleMenuClick(e.target); 
-        filterData(mainCat, null); 
-        window.scrollTo(0, 0); 
-        if(isMobile) closeSidebar();
-        closePreview();
-    };
-    groupDiv.appendChild(header);
-
-    if (subCats.length > 0) {
-        subCats.forEach(sub => {
-            const btn = document.createElement('button');
-            btn.className = 'nav-item';
-            btn.innerText = sub;
-            btn.onclick = (e) => {
-                handleMenuClick(e.target);
-                filterData(mainCat, sub);
-                window.scrollTo(0, 0); 
-                if(isMobile) closeSidebar();
-                closePreview();
-            };
-            groupDiv.appendChild(btn);
-        });
-    } 
-    return groupDiv;
-}
-
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const hamburger = document.querySelector('.hamburger-menu');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('open');
-    hamburger.classList.toggle('open'); 
+    h1 { margin: 0; font-size: 1.3rem; line-height: 1; display: inline-block; vertical-align: middle; }
+    #navMenuContainer { display: none; }
+    .hamburger-menu { display: flex; }
+    .items-grid { grid-template-columns: repeat(2, 1fr); }
+    .floating-btns { bottom: 25px; right: 15px; }
+    .float-btn { width: 40px; height: 40px; }
+    .float-btn img { width: 22px; height: 22px; }
+    .floating-progress { width: 60%; padding: 10px 15px; bottom: 20px; }
     
-    if (sidebar.classList.contains('open')) {
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = '';
-    }
-}
-
-function closeSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const hamburger = document.querySelector('.hamburger-menu');
-    sidebar.classList.remove('open');
-    overlay.classList.remove('open');
-    hamburger.classList.remove('open');
-    document.body.style.overflow = ''; 
-}
-
-function handleMenuClick(target) {
-    document.querySelectorAll('.nav-item, .nav-header').forEach(b => b.classList.remove('active'));
-    target.classList.add('active');
-}
-
-function resetFilter() {
-    document.querySelectorAll('.nav-item, .nav-header').forEach(b => b.classList.remove('active'));
-    renderAllList(); 
-}
-
-function filterData(mainCat, subCat) {
-    if (mainCat === null) {
-        currentDisplayData = productData;
-    } else {
-        currentDisplayData = productData.filter(item => {
-            const m = item.category === mainCat;
-            const s = subCat ? (item.sub_category === subCat) : true;
-            return m && s;
-        });
-    }
-    renderList(currentDisplayData);
-}
-
-function renderList(items) {
-    listContainer.innerHTML = '';
-    if (items.length === 0) {
-        listContainer.innerHTML = '<div class="status-msg">해당하는 상품이 없습니다.</div>';
-        return;
-    }
-
-    const grouped = new Map();
-    items.forEach(item => {
-        const key = (item.sub_category && item.sub_category.trim() !== '') ? item.sub_category : item.category;
-        if (!grouped.has(key)) grouped.set(key, []);
-        grouped.get(key).push(item);
-    });
-
-    for (const [title, groupItems] of grouped) {
-        const section = document.createElement('div');
-        section.className = 'category-section';
-        const ownedCount = groupItems.filter(i => {
-            if(isMetalFigure(i.id)) {
-                return METAL_COLORS.some(c => ownedItems.has(`${i.id}_${c.code}`));
-            }
-            return ownedItems.has(i.id);
-        }).length;
-        
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'category-title';
-        titleDiv.innerHTML = `${title} <small style="color:#888; font-weight:normal;">(${ownedCount}/${groupItems.length})</small>`;
-        
-        const grid = document.createElement('div');
-        grid.className = 'items-grid';
-
-        groupItems.forEach(item => {
-            const isMetal = isMetalFigure(item.id);
-            const isOwned = isMetal 
-                            ? METAL_COLORS.some(c => ownedItems.has(`${item.id}_${c.code}`))
-                            : ownedItems.has(item.id);
-            
-            const card = document.createElement('div');
-            card.className = `item-card ${isOwned ? 'checked' : ''}`;
-            
-            if (!isMetal) {
-                card.onclick = () => toggleCheck(item.id);
-            }
-
-            const imgSrc = item.image || 'https://via.placeholder.com/150?text=No+Image';
-
-            let metalColorHtml = '';
-            if (isMetal) {
-                metalColorHtml = `<div class="metal-colors">`;
-                METAL_COLORS.forEach(c => {
-                    const colorKey = `${item.id}_${c.code}`;
-                    const hasColor = ownedItems.has(colorKey);
-                    metalColorHtml += `
-                        <div class="metal-color-btn ${hasColor ? 'active' : ''}" 
-                             style="background-color: ${c.hex}"
-                             onclick="toggleMetalColor('${colorKey}', this)">
-                        </div>`;
-                });
-                metalColorHtml += `</div>`;
-            }
-
-            card.innerHTML = `
-                <div class="item-img-wrapper">
-                    <img src="${imgSrc}" loading="lazy" alt="${item.nameKo}">
-                    ${isMetal ? metalColorHtml : '<div class="check-overlay"></div>'}
-                </div>
-                <div class="item-info">
-                    <div class="item-name">${item.nameKo}</div>
-                    <div class="item-subname">${item.nameJp || ''}</div>
-                    <div class="item-price">${item.price || '-'}</div>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-        section.appendChild(titleDiv);
-        section.appendChild(grid);
-        listContainer.appendChild(section);
-    }
-}
-
-function renderAllList() {
-    currentDisplayData = productData;
-    renderList(productData);
-}
-
-function toggleCheck(id) {
-    if (ownedItems.has(id)) {
-        ownedItems.delete(id);
-    } else {
-        ownedItems.add(id);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
-    renderList(currentDisplayData);
-    updateProgress(); 
-}
-
-function toggleMetalColor(key, btnElement) {
-    if (event) event.stopPropagation();
-
-    if (ownedItems.has(key)) {
-        ownedItems.delete(key);
-        btnElement.classList.remove('active');
-    } else {
-        ownedItems.add(key);
-        btnElement.classList.add('active');
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
+    .control-row { justify-content: center; }
+    .preview-controls-wrapper input[type="text"] { width: 140px; }
     
-    renderList(currentDisplayData); 
-    updateProgress();
-}
-
-function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function resetRecords() {
-    if (confirm("모든 체크 기록을 삭제하시겠습니까?")) {
-        ownedItems.clear();
-        localStorage.removeItem(STORAGE_KEY);
-        renderList(currentDisplayData);
-        updateProgress();
-        alert("초기화되었습니다.");
+    .bottom-row {
+        justify-content: flex-start;
+        overflow-x: auto;
+        width: 100%;
+        padding-bottom: 5px;
+        scrollbar-width: none; -ms-overflow-style: none;
     }
+    .bottom-row::-webkit-scrollbar { display: none; }
 }
-
-function updateProgress() {
-    const totalCount = productData.length;
-    if (totalCount === 0) return;
-    
-    const validOwnedCount = productData.filter(item => {
-        if(isMetalFigure(item.id)) {
-            return METAL_COLORS.some(c => ownedItems.has(`${item.id}_${c.code}`));
-        }
-        return ownedItems.has(item.id);
-    }).length;
-
-    const percent = Math.round((validOwnedCount / totalCount) * 100);
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    if(progressBar) progressBar.style.width = `${percent}%`;
-    if(progressText) progressText.innerText = `${validOwnedCount}/${totalCount} (${percent}%)`;
-}
-
-// --- 이미지 생성 메인 ---
-async function generateImage() {
-    await document.fonts.ready;
-    
-    const checkedItems = productData.filter(item => {
-        if (isMetalFigure(item.id)) {
-            return METAL_COLORS.some(c => ownedItems.has(`${item.id}_${c.code}`));
-        } else {
-            return ownedItems.has(item.id);
-        }
-    });
-
-    if (checkedItems.length === 0) {
-        alert("선택된 상품이 없습니다.");
-        return;
-    }
-    updateCollectionPreview();
-    
-    listContainer.style.display = 'none';
-    previewContainer.style.display = 'flex';
-    scrollToTop();
-}
-
-// [수정] 메탈 피규어 색상 그리기 로직 변경 (공백 없이 붙여서)
-async function drawCollectionCanvas(items) {
-    const cvs = document.createElement('canvas');
-    const ctx = cvs.getContext('2d');
-
-    const showTitle = optTitleCheck.checked;
-    const titleText = optTitleInput.value;
-    const showNameKo = optNameKoCheck.checked;
-    const showNameJp = optNameJpCheck.checked;
-    const showPrice = optPriceCheck.checked;
-    const showText = showNameKo || showNameJp;
-
-    const cardWidth = 200;
-    const imgHeight = 200;
-    
-    let textHeight = 0;
-    const nameLineHeight = 20;
-    const priceLineHeight = 20;
-    const paddingY = 10;
-
-    if (showText) textHeight += (nameLineHeight * 2); 
-    if (showPrice) textHeight += priceLineHeight;
-    if (showText || showPrice) textHeight += (paddingY * 2);
-
-    const cardHeight = imgHeight + textHeight;
-    const gap = 20; 
-    const colCount = 5;
-    const padding = 40; 
-    const titleAreaHeight = showTitle ? 80 : 0;
-
-    const rowCount = Math.ceil(items.length / colCount);
-    const contentWidth = (cardWidth * colCount) + (gap * (colCount - 1));
-    const contentHeight = (cardHeight * rowCount) + (gap * (rowCount - 1));
-
-    cvs.width = padding * 2 + contentWidth;
-    cvs.height = padding * 2 + contentHeight + titleAreaHeight;
-
-    ctx.fillStyle = "#fafafa"; 
-    ctx.fillRect(0, 0, cvs.width, cvs.height);
-
-    let startY = padding;
-    if (showTitle) {
-        ctx.font = "bold 40px 'Paperlogy', sans-serif";
-        ctx.fillStyle = "#182558";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(titleText, cvs.width / 2, padding + 20);
-        startY += titleAreaHeight;
-    }
-
-    const loadImage = (src) => new Promise(resolve => {
-        const img = new Image();
-        img.crossOrigin = "Anonymous";
-        img.src = src;
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-    });
-
-    const getLines = (text, maxWidth) => {
-        const words = text.split('');
-        const lines = [];
-        let currentLine = words[0];
-        for (let i = 1; i < words.length; i++) {
-            const word = words[i];
-            const width = ctx.measureText(currentLine + word).width;
-            if (width < maxWidth) {
-                currentLine += word;
-            } else {
-                lines.push(currentLine);
-                currentLine = word;
-            }
-        }
-        lines.push(currentLine);
-        return lines;
-    };
-
-    for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const c = i % colCount;
-        const r = Math.floor(i / colCount);
-        
-        const x = padding + c * (cardWidth + gap);
-        const y = startY + r * (cardHeight + gap);
-        const borderRadius = 15; 
-
-        ctx.save(); 
-        ctx.shadowColor = "rgba(0, 0, 0, 0.1)"; 
-        ctx.shadowBlur = 10; 
-        ctx.shadowOffsetY = 4; 
-        ctx.fillStyle = "#ffffff"; 
-        ctx.beginPath();
-        ctx.roundRect(x, y, cardWidth, cardHeight, borderRadius);
-        ctx.fill();
-        ctx.restore();
-
-        const img = await loadImage(item.image);
-        if (img) {
-            ctx.save();
-            ctx.beginPath();
-            if (showText || showPrice) {
-                ctx.roundRect(x, y, cardWidth, imgHeight, [borderRadius, borderRadius, 0, 0]);
-            } else {
-                ctx.roundRect(x, y, cardWidth, imgHeight, borderRadius);
-            }
-            ctx.clip();
-
-            const aspect = img.width / img.height;
-            let dw = cardWidth, dh = imgHeight;
-            if (aspect > 1) dw = imgHeight * aspect; 
-            else dh = cardWidth / aspect;
-            
-            ctx.drawImage(img, x + (cardWidth - dw)/2, y + (imgHeight - dh)/2, dw, dh);
-            ctx.restore(); 
-            
-            // [NEW] 메탈 피규어 색상 그리기 (체크된 것만 붙여서)
-            if (isMetalFigure(item.id)) {
-                const dotSize = 14;
-                const dotGap = 4;
-                const dotY = y + 10;
-
-                // 1. 체크된 색상만 필터링
-                const checkedColors = METAL_COLORS.filter(col => ownedItems.has(`${item.id}_${col.code}`));
-
-                if (checkedColors.length > 0) {
-                    // 2. 필요한 전체 너비 계산
-                    const totalW = (checkedColors.length * dotSize) + ((checkedColors.length - 1) * dotGap);
-                    // 3. 시작 X 좌표 계산 (우측 정렬)
-                    let currentDotX = x + cardWidth - 10 - totalW;
-
-                    // 4. 순서대로 그리기
-                    checkedColors.forEach(col => {
-                        ctx.save();
-                        ctx.fillStyle = col.hex;
-                        ctx.beginPath();
-                        ctx.roundRect(currentDotX, dotY, dotSize, dotSize, 3);
-                        ctx.fill();
-                        ctx.strokeStyle = "white";
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
-                        ctx.restore();
-
-                        // 다음 네모 위치로 이동
-                        currentDotX += dotSize + dotGap;
-                    });
-                }
-            }
-        }
-
-        if (showText || showPrice) {
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillStyle = "#333";
-
-            let lines = [];
-            if (showText) {
-                ctx.font = "bold 15px 'Pretendard', sans-serif";
-                let textToDraw = showNameJp 
-                                 ? (item.nameJp && item.nameJp.trim() !== '' ? item.nameJp : item.nameKo) 
-                                 : item.nameKo;
-                
-                let tempLines = getLines(textToDraw, cardWidth - 20);
-                if (tempLines.length > 2) {
-                    tempLines = tempLines.slice(0, 2);
-                    tempLines[1] = tempLines[1].slice(0, -1) + "...";
-                }
-                lines = tempLines;
-            }
-
-            let contentHeight = 0;
-            if (showText) contentHeight += lines.length * nameLineHeight;
-            if (showPrice) contentHeight += priceLineHeight;
-            if (showText && showPrice) contentHeight += 5; 
-
-            const textAreaCenterY = y + imgHeight + (textHeight / 2);
-            let drawY = textAreaCenterY - (contentHeight / 2) + (nameLineHeight / 2); 
-
-            if (showText) {
-                ctx.font = "bold 15px 'Pretendard', sans-serif";
-                lines.forEach(line => {
-                    ctx.fillText(line, x + (cardWidth/2), drawY);
-                    drawY += nameLineHeight;
-                });
-            }
-
-            if (showPrice) {
-                if (showText) drawY += 5; 
-                if (!showText) {
-                     drawY = textAreaCenterY - (priceLineHeight / 2) + (priceLineHeight / 2); 
-                }
-                
-                ctx.font = "14px 'Pretendard', sans-serif";
-                ctx.fillStyle = "#182558"; 
-                ctx.fillText(item.price || '-', x + (cardWidth/2), drawY);
-            }
-        }
-    }
-    return cvs.toDataURL('image/jpeg', 0.9);
-}
-
-function downloadImage() {
-    const img = document.getElementById('imgCollection');
-    if(!img || !img.src) return;
-    
-    const link = document.createElement('a');
-    link.download = 'kenshi_collection_list.jpg';
-    link.href = img.src;
-    link.click();
-}
-
-init();
