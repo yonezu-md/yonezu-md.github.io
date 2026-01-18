@@ -323,7 +323,7 @@ h1 {
 .float-btn img { width: 30px; height: 30px; object-fit: contain; }
 .float-btn:hover { transform: scale(1.1); }
 
-.floating-progress { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background-color: #FFFFFF; border-radius: 20px; padding: 15px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 900; }
+.floating-progress { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 250px; background-color: #FFFFFF; border-radius: 15px; padding: 15px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 900; }
 .progress-info { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #666; font-weight: bold; }
 .progress-text { color: var(--primary-color); }
 .progress-track { width: 100%; height: 8px; background-color: #eee; border-radius: 4px; overflow: hidden; }
