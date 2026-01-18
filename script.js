@@ -4,6 +4,18 @@ let productData = [];
 let currentDisplayData = []; 
 const STORAGE_KEY = 'kenshi_owned';
 
+// 메탈 피규어 색상 정의
+const METAL_COLORS = [
+    { code: 'red',    hex: '#FF0000', label: '빨강' },
+    { code: 'green',  hex: '#008000', label: '초록' },
+    { code: 'blue',   hex: '#0000FF', label: '파랑' },
+    { code: 'purple', hex: '#800080', label: '보라' },
+    { code: 'gun',    hex: '#545D63', label: '건메탈' },
+    { code: 'gold',   hex: '#FFD700', label: '금' },
+    { code: 'silver', hex: '#C0C0C0', label: '은' },
+    { code: 'bronze', hex: '#CD7F32', label: '동' }
+];
+
 let ownedItems = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
 
 const listContainer = document.getElementById('listContainer');
@@ -48,7 +60,14 @@ function setupEventListeners() {
 }
 
 async function updateCollectionPreview() {
-    const checkedItems = productData.filter(item => ownedItems.has(item.id));
+    const checkedItems = productData.filter(item => {
+        if (isMetalFigure(item.id)) {
+            return METAL_COLORS.some(c => ownedItems.has(`${item.id}_${c.code}`));
+        } else {
+            return ownedItems.has(item.id);
+        }
+    });
+
     if (checkedItems.length === 0) return;
     const collectionUrl = await drawCollectionCanvas(checkedItems);
     document.getElementById('imgCollection').src = collectionUrl;
@@ -93,6 +112,11 @@ function parseCSV(csvText) {
     return data;
 }
 
+// --- 메탈 피규어 판별 ---
+function isMetalFigure(id) {
+    return id.startsWith('fog_metal_');
+}
+
 // --- 화면 전환 ---
 function goHome() {
     resetFilter();
@@ -111,7 +135,7 @@ function showPreview(collectionUrl) {
     listContainer.style.display = 'none';
     previewContainer.style.display = 'flex'; 
     document.getElementById('imgCollection').src = collectionUrl;
-    scrollToTop(); // 미리보기 때는 부드럽게 올라가도 무관 (원하시면 제거 가능)
+    scrollToTop();
 }
 
 // --- 네비게이션 ---
@@ -177,18 +201,13 @@ function createCategoryGroup(mainCat, subCats, isMobile) {
     const header = document.createElement('button');
     header.className = 'nav-header';
     header.innerText = mainCat;
-    
     header.onclick = (e) => {
         handleMenuClick(e.target); 
         filterData(mainCat, null); 
-        
-        // [수정] 카테고리 이동 시 즉시 맨 위로 (애니메이션 없음)
-        window.scrollTo(0, 0);
-        
+        window.scrollTo(0, 0); 
         if(isMobile) closeSidebar();
         closePreview();
     };
-    
     groupDiv.appendChild(header);
 
     if (subCats.length > 0) {
@@ -199,10 +218,7 @@ function createCategoryGroup(mainCat, subCats, isMobile) {
             btn.onclick = (e) => {
                 handleMenuClick(e.target);
                 filterData(mainCat, sub);
-                
-                // [수정] 카테고리 이동 시 즉시 맨 위로 (애니메이션 없음)
-                window.scrollTo(0, 0);
-                
+                window.scrollTo(0, 0); 
                 if(isMobile) closeSidebar();
                 closePreview();
             };
@@ -212,17 +228,14 @@ function createCategoryGroup(mainCat, subCats, isMobile) {
     return groupDiv;
 }
 
-// [수정] 사이드바 열 때 본문 스크롤 잠금
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     const hamburger = document.querySelector('.hamburger-menu');
-    
     sidebar.classList.toggle('open');
     overlay.classList.toggle('open');
     hamburger.classList.toggle('open'); 
     
-    // 열려있으면 스크롤 막음, 닫히면 품
     if (sidebar.classList.contains('open')) {
         document.body.style.overflow = 'hidden';
     } else {
@@ -230,17 +243,14 @@ function toggleSidebar() {
     }
 }
 
-// [수정] 사이드바 닫을 때 본문 스크롤 해제
 function closeSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     const hamburger = document.querySelector('.hamburger-menu');
-    
     sidebar.classList.remove('open');
     overlay.classList.remove('open');
     hamburger.classList.remove('open');
-    
-    document.body.style.overflow = ''; // 스크롤 복구
+    document.body.style.overflow = ''; 
 }
 
 function handleMenuClick(target) {
@@ -283,7 +293,12 @@ function renderList(items) {
     for (const [title, groupItems] of grouped) {
         const section = document.createElement('div');
         section.className = 'category-section';
-        const ownedCount = groupItems.filter(i => ownedItems.has(i.id)).length;
+        const ownedCount = groupItems.filter(i => {
+            if(isMetalFigure(i.id)) {
+                return METAL_COLORS.some(c => ownedItems.has(`${i.id}_${c.code}`));
+            }
+            return ownedItems.has(i.id);
+        }).length;
         
         const titleDiv = document.createElement('div');
         titleDiv.className = 'category-title';
@@ -293,17 +308,39 @@ function renderList(items) {
         grid.className = 'items-grid';
 
         groupItems.forEach(item => {
-            const isOwned = ownedItems.has(item.id);
+            const isMetal = isMetalFigure(item.id);
+            const isOwned = isMetal 
+                            ? METAL_COLORS.some(c => ownedItems.has(`${item.id}_${c.code}`))
+                            : ownedItems.has(item.id);
+            
             const card = document.createElement('div');
             card.className = `item-card ${isOwned ? 'checked' : ''}`;
-            card.onclick = () => toggleCheck(item.id);
+            
+            if (!isMetal) {
+                card.onclick = () => toggleCheck(item.id);
+            }
 
             const imgSrc = item.image || 'https://via.placeholder.com/150?text=No+Image';
+
+            let metalColorHtml = '';
+            if (isMetal) {
+                metalColorHtml = `<div class="metal-colors">`;
+                METAL_COLORS.forEach(c => {
+                    const colorKey = `${item.id}_${c.code}`;
+                    const hasColor = ownedItems.has(colorKey);
+                    metalColorHtml += `
+                        <div class="metal-color-btn ${hasColor ? 'active' : ''}" 
+                             style="background-color: ${c.hex}"
+                             onclick="toggleMetalColor('${colorKey}', this)">
+                        </div>`;
+                });
+                metalColorHtml += `</div>`;
+            }
 
             card.innerHTML = `
                 <div class="item-img-wrapper">
                     <img src="${imgSrc}" loading="lazy" alt="${item.nameKo}">
-                    <div class="check-overlay"></div>
+                    ${isMetal ? metalColorHtml : '<div class="check-overlay"></div>'}
                 </div>
                 <div class="item-info">
                     <div class="item-name">${item.nameKo}</div>
@@ -335,6 +372,22 @@ function toggleCheck(id) {
     updateProgress(); 
 }
 
+function toggleMetalColor(key, btnElement) {
+    if (event) event.stopPropagation();
+
+    if (ownedItems.has(key)) {
+        ownedItems.delete(key);
+        btnElement.classList.remove('active');
+    } else {
+        ownedItems.add(key);
+        btnElement.classList.add('active');
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...ownedItems]));
+    
+    renderList(currentDisplayData); 
+    updateProgress();
+}
+
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -352,7 +405,14 @@ function resetRecords() {
 function updateProgress() {
     const totalCount = productData.length;
     if (totalCount === 0) return;
-    const validOwnedCount = productData.filter(item => ownedItems.has(item.id)).length;
+    
+    const validOwnedCount = productData.filter(item => {
+        if(isMetalFigure(item.id)) {
+            return METAL_COLORS.some(c => ownedItems.has(`${item.id}_${c.code}`));
+        }
+        return ownedItems.has(item.id);
+    }).length;
+
     const percent = Math.round((validOwnedCount / totalCount) * 100);
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
@@ -363,7 +423,15 @@ function updateProgress() {
 // --- 이미지 생성 메인 ---
 async function generateImage() {
     await document.fonts.ready;
-    const checkedItems = productData.filter(item => ownedItems.has(item.id));
+    
+    const checkedItems = productData.filter(item => {
+        if (isMetalFigure(item.id)) {
+            return METAL_COLORS.some(c => ownedItems.has(`${item.id}_${c.code}`));
+        } else {
+            return ownedItems.has(item.id);
+        }
+    });
+
     if (checkedItems.length === 0) {
         alert("선택된 상품이 없습니다.");
         return;
@@ -375,6 +443,7 @@ async function generateImage() {
     scrollToTop();
 }
 
+// [수정] 메탈 피규어 색상 그리기 로직 변경 (공백 없이 붙여서)
 async function drawCollectionCanvas(items) {
     const cvs = document.createElement('canvas');
     const ctx = cvs.getContext('2d');
@@ -487,6 +556,39 @@ async function drawCollectionCanvas(items) {
             
             ctx.drawImage(img, x + (cardWidth - dw)/2, y + (imgHeight - dh)/2, dw, dh);
             ctx.restore(); 
+            
+            // [NEW] 메탈 피규어 색상 그리기 (체크된 것만 붙여서)
+            if (isMetalFigure(item.id)) {
+                const dotSize = 14;
+                const dotGap = 4;
+                const dotY = y + 10;
+
+                // 1. 체크된 색상만 필터링
+                const checkedColors = METAL_COLORS.filter(col => ownedItems.has(`${item.id}_${col.code}`));
+
+                if (checkedColors.length > 0) {
+                    // 2. 필요한 전체 너비 계산
+                    const totalW = (checkedColors.length * dotSize) + ((checkedColors.length - 1) * dotGap);
+                    // 3. 시작 X 좌표 계산 (우측 정렬)
+                    let currentDotX = x + cardWidth - 10 - totalW;
+
+                    // 4. 순서대로 그리기
+                    checkedColors.forEach(col => {
+                        ctx.save();
+                        ctx.fillStyle = col.hex;
+                        ctx.beginPath();
+                        ctx.roundRect(currentDotX, dotY, dotSize, dotSize, 3);
+                        ctx.fill();
+                        ctx.strokeStyle = "white";
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        ctx.restore();
+
+                        // 다음 네모 위치로 이동
+                        currentDotX += dotSize + dotGap;
+                    });
+                }
+            }
         }
 
         if (showText || showPrice) {
